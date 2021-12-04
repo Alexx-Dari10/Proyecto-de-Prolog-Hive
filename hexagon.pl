@@ -2,7 +2,7 @@
 
 module(hexagon,
     [
-        is_connected_hex_to_hive/2
+        is_connected_hex_to_hive/2, direction/2
     ]).
 
 %import
@@ -55,6 +55,9 @@ dfs(Hex1, Hex2, Hive, Visited):-
     in_Hive(Adj_hex1),
     not(member(Adj_hex1, Visited_1)), % para saber si un nodo no esta visitado
     dfs(Adj_hex1, Hex2, Hive, Visited_1).
+
+
+all_neighbors(Hex, L_Neighbors):- findall(Neighbor_hex, are_neighbors(Hex,Neighbor_hex), L_Neighbors).
 
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
