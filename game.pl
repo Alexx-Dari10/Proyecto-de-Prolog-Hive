@@ -121,8 +121,26 @@ player_can_play(Player_id, L_hive):-
         length(Moves, Length),
         hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
     ).
+
+% juego terminado 
+end_game(Player_id, L_hive):-
+    insect(abejaReina, Id, Player_id, Hex, Level),
+    member(Hex, L_hive),
+    findall(Hex_neighbor, 
+            (hexagon:are_neighbors(Hex,Hex_neighbor), member(Hex_neighbor,L_hive)), 
+            L_neighbors),
+    
+    length(L_neighbors, Length),
+    Length == 6,
+    writeln("Fin de la partida. Perdio: "),
+    writeln(Player_id).
     
 
+% juego empatado  
+tie_game(Player_id1, Player_id2, L_hive):-
+    end_game(Player_id1, L_hive),
+    end_game(Player_id2, L_hive),
+    writeln("Juego empatado").   
     
 
 game():-
