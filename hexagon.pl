@@ -2,7 +2,7 @@
 
 module(hexagon,
     [
-        is_connected_hex_to_hive/2, direction/2
+        is_connected_hex_to_hive/2, direction/2, articulation_point/2,hive/1
     ]).
 
 %import
@@ -20,9 +20,6 @@ direction(4, [1, -1]).
 direction(5, [0, -1]).
 direction(6, [-1, 0]).
 
-% hexagono con una fila r y una columna q devuelve el vector [r,q]
-hex(R,Q, [R,Q]).
-
 
 are_neighbors(Hex1, Hex2):- are_neighbors_dir(Hex1,Hex2,1).
 
@@ -31,7 +28,8 @@ are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- direction(Dir,[R_dir,Q_dir]), R2 is R1+
 are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- Dir1 is Dir + 1, Dir1 =< 6, are_neighbors_dir([R1,Q1],[R2,Q2],Dir1).
 
 % esta colmena es de ejemplo. Pero va a hacer asi. Contiene las posiciones de las casillas
-hive([[0,0], [0,1], [0,2], [1,-1], [1,0], [1,1], [1,2], [2,0], [2,1], [2,2]]).
+
+hive([[0,0], [1,0], [2,0], [3,0], [0,1], [1,1], [2,1] , [1,2], [0,3]]).
 % este metodo nos dice si una casilla esta en la colmena o no 
 in_Hive(Cas):- hive(L), member(Cas, L),!.
 
@@ -43,22 +41,45 @@ adj(H1,H2):-
 % para saber si el nodo q se quiere agregar esta conectado a la colmena
 is_connected_hex_to_hive(Hex, Hive):-
     member(Hex_memb, Hive),
+    not(Hex_memb == Hex),
     dfs(Hex, Hex_memb, Hive, []),!.
 
 add_to_hive(Hex):- not(in_Hive(Hex)), hive(L), is_connected_hex_to_hive(Hex, L).
 
 % devuelve true si hay camino entre dos casillas de la colmena
-dfs(Hex1, Hex2, Hive, Visited):- Hex1 == Hex2, !.
+dfs(Hex1, Hex2, Hive, Visited):- Hex1 == Hex2, writeln("esta conectado"),!.
 dfs(Hex1, Hex2, Hive, Visited):-
     append(Visited,[Hex1], Visited_1),
     are_neighbors(Hex1, Adj_hex1),
-    in_Hive(Adj_hex1),
+    member(Adj_hex1, Hive),
     not(member(Adj_hex1, Visited_1)), % para saber si un nodo no esta visitado
     dfs(Adj_hex1, Hex2, Hive, Visited_1).
 
 
 all_neighbors(Hex, L_Neighbors):- findall(Neighbor_hex, are_neighbors(Hex,Neighbor_hex), L_Neighbors).
 
+
+% saber si es un punto de articulacion
+articulation_point(Hex_old, L_hive):-
+    delete(L_hive, Hex_old, L_hive1),
+    findall(Hex_neighbor, 
+               (
+                    are_neighbors(Hex_old, Hex_neighbor), 
+                    member(Hex_neighbor, L_hive1),
+                    is_connected_hex_to_hive(Hex_neighbor, L_hive1)
+                );
+                (
+                    are_neighbors(Hex_old, Hex_neighbor), 
+                    not(member(Hex_neighbor, L_hive1))
+                ),
+            L_neighbors),
+    
+    length(L_neighbors, Length),
+    
+    Length < 6,
+    writeln("Articulation point").
+    
+    
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 % esto es para tener los hexagonos de la forma del juego
