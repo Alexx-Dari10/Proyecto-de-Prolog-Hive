@@ -36,15 +36,39 @@ start_insects(Player):-
 % actualizar los movimientos del insecto en la base de datos
 
 move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
-    % agrega el insecto a la colmena poniendole nivel 0
-    retract(insect(Type, Id, Player_id,Hex, _)),
-    assert(insect(Type, Id, Player_id, Hex_fin, Level)),
     
-    %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
-    delete(L_hive, Hex, L_1),
-    append(L_1, [Hex_fin], L_2),
-    retract(hive(L_hive)),
-    assert(hive(L_2)).
+    (
+        (Type = escarabajo,!; Type = mosquito),
+        member(Hex_fin, L_hive), % ya hay otra ficha en esta posicion
+        %quito la ficha con el nivel que tenga y la pongo en un nivel mas
+        %NOTA: ver los niveles como las posiciones de una pila (el q esta en el nivel 0 esta en el tope de la pila) 
+        retract(insect(Type2, Id2, Player_id2,Hex_fin, Level1)),
+        Level2 is Level1 + 1,
+        assert(insect(Type2, Id2, Player_id2,Hex_fin, Level2)),
+
+        % agrega el insecto a la colmena poniendole nivel 0
+        retract(insect(Type, Id, Player_id,Hex, _)),
+        assert(insect(Type, Id, Player_id, Hex_fin, Level)),
+        
+        
+        %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
+        delete(L_hive, Hex, L_1),
+        append(L_1, [Hex_fin], L_2),
+        retract(hive(L_hive)),
+        assert(hive(L_2))
+    );
+    (
+        % agrega el insecto a la colmena poniendole nivel 0
+        retract(insect(Type, Id, Player_id,Hex, _)),
+        assert(insect(Type, Id, Player_id, Hex_fin, Level)),
+        
+        %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
+        delete(L_hive, Hex, L_1),
+        append(L_1, [Hex_fin], L_2),
+        retract(hive(L_hive)),
+        assert(hive(L_2))
+    ).
+
 
     
 
@@ -62,7 +86,8 @@ find_insects_in_hand(Player,L):-
 find_insects_in_hive(Player,L):-
     findall([Type, Id, Player, Hex, Level], (insect(Type, Id, Player, Hex,Level), bigger(Level,-1)), L).
 
-
+insect_blocked(Type, Id, Player_id , Hex, Level):-
+    not(Level == 0).
 
 
 %~~~~~~~~~~~~~ POSIBLES MOVIMIENTOS ~~~~~~~~~~~~~
@@ -141,7 +166,7 @@ is_same_color_or_white(Player_id, Player_id2, Neighbor, L_hive):-
 %~~~~ ABEJA REINA ~~~~
 
 abejaReina_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     findall(Hex1, 
@@ -155,7 +180,7 @@ abejaReina_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 % ~~~~ HORMIGA ~~~~
 
 hormiga_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     % esto nos da todos los hexagonos en blanco q son adyacentes a los de la colmena
@@ -175,7 +200,7 @@ hormiga_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 %~~~~ SALTAMONTE ~~~~
 
 saltamonte_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     saltamonte_move(Hex, L_hive1, Moves).
@@ -225,7 +250,7 @@ saltamonte_move([R,Q],L_hive1, Moves):-
 %~~~~ ESCARABAJO ~~~~
 
 escarabajo_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     findall(Hex1, 
@@ -239,7 +264,7 @@ escarabajo_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 %~~~~ ARANHA ~~~~
 
 aranha_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     findall(Move, (aranha_move(Hex,L_hive1,[],0,Move)), Moves1),
@@ -266,7 +291,7 @@ aranha_move(Hex1, L_hive1, Visited,Level_rec, Move):-
 %~~~~ MOSQUITO ~~~~~
 
 mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
 
@@ -312,7 +337,7 @@ neighbor_dir([R1,Q1],Dir,[R2,Q2]):- hexagon:direction(Dir,[R_dir,Q_dir]), R2 is 
 %~~~~ MARIQUITA ~~~~~
 
 mariquita_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     findall(Move, (mariquita_move(Hex,L_hive1,[],0,Move)), Moves1),
@@ -356,7 +381,7 @@ mariquita_move(Hex1, L_hive1, Visited, Level_rec, Move):-
 %~~~~~ BICHO BOLA ~~~~~
 
 bichoBola_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
-    %si no esta bloqueada
+    not(insect_blocked(Type, Id, Player_id , Hex, Level)),
     not(hexagon:articulation_point(Hex,L_hive)),
     delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
     findall(Hex1, 

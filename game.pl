@@ -99,24 +99,24 @@ must_add_queen(Player_id):-
 
 
 player_can_play(Player_id, L_hive):-
-    findall((Type, Id, Player_id,Hex,Level), 
+    findall([Type, Id, Player_id,Hex,Level], 
             (hexagon:insect(Type, Id, Player_id,Hex, Level), member(Hex, L_hive)), 
             insects_hive),
 
-    findall((Type, Id, Player_id,Hex,Level), 
+    findall([Type, Id, Player_id,Hex,Level], 
     (hexagon:insect(Type, Id, Player_id,Hex, Level), not(member(Hex, L_hive))), 
     insects_hand),
     
     % for para recorrer todos los insectos de la colmena, del jugador
     (
-        member((Type, Id, Player_id,Hex,Level), insects_hive), 
+        member([Type, Id, Player_id,Hex,Level], insects_hive), 
         insects:possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive),
         length(Moves, Length),
         hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
     );
     % for para recorrer todos los insectos de la mano, del jugador 
     (
-        member((Type, Id, Player_id,Hex,Level), insects_hand), 
+        member([Type, Id, Player_id,Hex,Level], insects_hand), 
         insects:possible_moves(add, Type, Id, Player_id , Hex, Level, Moves, L_hive),
         length(Moves, Length),
         hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
