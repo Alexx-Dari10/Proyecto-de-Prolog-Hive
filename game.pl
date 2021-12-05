@@ -1,7 +1,7 @@
 :- consult(insects), import(insects).
 :- consult(hexagon), import(hexagon).
 
-:- dynamic player/3, hive/1, add_queen/1.
+:- dynamic player/4, hive/1, add_queen/1.
 
 % player(Id, Moves, Current, Init).
 % insect(Type, Id, Player_id, Hex=[Q,R], Placed, Lvl)
@@ -59,18 +59,32 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
 
 
 
-change_player_turn(Type, Id, Player_id, Hex, Level, Hex_fin, L):-
-    % elimina el jugador que es current ahora 
-    retract(player(Player_id, Moves, Current,Init)),
 
-    % busca el otro jugador que hay en la base de datos y lo pone como current
-    retract(player(Id, Moves_other, false, Init_other)),
-    assert(player(Id, Moves_other, true, Init_other)),
-    
-    % agrega al jugador que hizo la jugada con un movimiento mas
-    Moves_new is Moves + 1,
-    assert(player(Player_id, Moves_new, false, false)).
+change_player_turn(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
+    (
+        % elimina el jugador que es current ahora 
+        retract(player(Player_id, Moves, Current,Init)),
+        % busca el otro jugador que hay en la base de datos y lo pone como current si este puede jugar
+        player(Id, Moves_other, false, Init_other),
+        player_can_play(Id, L_hive),
+        retract(player(Id, Moves_other, false, Init_other)),
+        assert(player(Id, Moves_other, true, Init_other)),
+        
+        % agrega al jugador que hizo la jugada con un movimiento mas
+        Moves_new is Moves + 1,
+        assert(player(Player_id, Moves_new, false, false))
+    );
+    (
+        % elimina el jugador que es current ahora con su cantidad de movimientos 
+        retract(player(Player_id, Moves, Current,Init)),
+        % busca el otro jugador que hay en la base de datos y lo pone como current si este puede jugar
+        player(Id, Moves_other, false, Init_other),
+        not(player_can_play(Id, L_hive)),
 
+        % agrega al jugador que hizo la jugada con un movimiento mas
+        Moves_new is Moves + 1,
+        assert(player(Player_id, Moves_new, true, false))
+    ).
 
 queen_in_game(Player_id):-
     insect(abejaReina, Id, Player_id, Hex, Level),
@@ -79,10 +93,37 @@ queen_in_game(Player_id):-
 % mira si ya es el cuarto movimiento a realizar y la reina no ha jugado
 must_add_queen(Player_id):-
     not(queen_in_game(Player_id)),
-    player(Id, Moves, Current),
-    player(Player_id, Moves, true),
+    player(Id, Moves, Current,_),
+    player(Player_id, Moves, true, _),
     Moves == 3.
 
+
+player_can_play(Player_id, L_hive):-
+    findall((Type, Id, Player_id,Hex,Level), 
+            (hexagon:insect(Type, Id, Player_id,Hex, Level), member(Hex, L_hive)), 
+            insects_hive),
+
+    findall((Type, Id, Player_id,Hex,Level), 
+    (hexagon:insect(Type, Id, Player_id,Hex, Level), not(member(Hex, L_hive))), 
+    insects_hand),
+    
+    % for para recorrer todos los insectos de la colmena, del jugador
+    (
+        member((Type, Id, Player_id,Hex,Level), insects_hive), 
+        insects:possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive),
+        length(Moves, Length),
+        hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
+    );
+    % for para recorrer todos los insectos de la mano, del jugador 
+    (
+        member((Type, Id, Player_id,Hex,Level), insects_hand), 
+        insects:possible_moves(add, Type, Id, Player_id , Hex, Level, Moves, L_hive),
+        length(Moves, Length),
+        hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
+    ).
+    
+
+    
 
 game():-
     start_game().
