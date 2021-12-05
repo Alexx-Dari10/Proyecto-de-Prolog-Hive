@@ -17,10 +17,45 @@ start_game():-
 
 
 move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
-    insects:possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
-    member(Hex_fin, Moves),
-    insects:move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive),
-    change_player_turn(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive).
+    (
+        Val == init,
+        insects:possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        member(Hex_fin, Moves),
+        insects:move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive),
+        change_player_turn(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive)
+    );
+    (
+        Val == add,
+        not(must_add_queen(Player_id)),
+        insects:possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        member(Hex_fin, Moves),
+        insects:move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive),
+        change_player_turn(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive)
+    );
+    (
+        Val == add,
+        must_add_queen(Player_id),
+        not(Type == abejaReina),
+        writeln("Debe agregar la abeja reina")
+        
+    );
+    (
+        not(Val == init),
+        not(Val == add),
+        not(queen_in_game(Player_id)),
+        writeln("No puede moverse ninguna ficha hasta que la reina este en juego")
+    );
+    (
+        not(Val == init),
+        not(Val == add),
+        queen_in_game(Player_id),
+        insects:possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        member(Hex_fin, Moves),
+        insects:move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive),
+        change_player_turn(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive)
+    ).
+        
+    
 
 
 
