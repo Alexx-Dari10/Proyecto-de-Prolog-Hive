@@ -2,7 +2,9 @@
 
 module(hexagon,
     [
-        is_connected_hex_to_hive/2, direction/2, articulation_point/2,hive/1
+        is_connected_hex_to_hive/2, direction/2, articulation_point/2,hive/1,
+        flat_hex_to_pixel/4, pixel_to_flat_hex/4
+
     ]).
 
 %import
