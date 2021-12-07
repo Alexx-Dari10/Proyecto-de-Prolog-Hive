@@ -3,7 +3,7 @@
 module(hexagon,
     [
         is_connected_hex_to_hive/2, direction/2, articulation_point/2,hive/1,
-        flat_hex_to_pixel/4, pixel_to_flat_hex/4
+        flat_hex_to_pixel/4, pixel_to_flat_hex/4, axial_to_oddq/2
 
     ]).
 
@@ -32,7 +32,7 @@ are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- Dir1 is Dir + 1, Dir1 =< 6, are_neighbo
 % esta colmena es de ejemplo. Pero va a hacer asi. Contiene las posiciones de las casillas
 
 hive([[0,0], [1,0], [2,0], [3,0], [0,1], [1,1], [2,1] , [1,2], [0,3]]).
-% este metodo nos dice si una casilla esta en la colmena o no 
+% este predicado nos dice si una casilla esta en la colmena o no 
 in_Hive(Cas):- hive(L), member(Cas, L),!.
 
 % para saber si dos hexagonos son adyacentes en la colmena
@@ -89,49 +89,47 @@ articulation_point(Hex_old, L_hive):-
 axial_to_oddq([R, Q], OffsetCoord):-
     number(R),
     number(Q),
-    var(OffsetCoord),
     Row is R + (Q - (Q mod 2)) / 2,
-    Col = Q,
+    Col is Q,
     OffsetCoord = [Row, Col].
 
 % oddq_to_axial(OffsetCoord, Hex)
 oddq_to_axial([Row, Col], Hex):-
     number(Row),
     number(Col),
-    var(Hex),
-    R = Row - (Col - (Col mod 2)) / 2,
-    Q = Col,
+    R is Row - (Col - (Col mod 2)) / 2,
+    Q is Col,
     Hex = [R, Q].
 
 % estas funciones son para dado un pixel convertirlo a un hexagono y viceversa
 
 flat_hex_to_pixel(R, Q, Size, Pixel):-
-    Row = Size * ( 3/2 * Q),
-    Col = Size * (sqrt(3)/2 * Q + sqrt(3)*R),
+    Row is Size * ( 3/2 * Q),
+    Col is Size * (sqrt(3)/2 * Q + sqrt(3)*R),
     Pixel= [Row,Col].
 
 pixel_to_flat_hex(Row,Col,Size,Hex):-
-    R = (-1/3 * Row + sqrt(3)/3 * Col)/Size,
-    Q = (2/3 * Row),
+    R is (-1/3 * Row + sqrt(3)/3 * Col)/Size,
+    Q is (2/3 * Row)/Size,
     axial_round(R, Q, Round_R, Round_Q),
     Hex = [Round_R,Round_Q].
 
-% estos metodos son x si los valores de los pixeles no son enteros entonces hay q redondearlos
+% estos predicados son x si los valores de los pixeles no son enteros entonces hay q redondearlos
 axial_round(R, Q, Round_R, Round_Q):-
-    Rgrid = round(R), 
-    Qgrid = round(Q),
-    X = R - Rgrid, 
-    Y = Q - Qgrid,
+    Rgrid is round(R), 
+    Qgrid is round(Q),
+    X is R - Rgrid, 
+    Y is Q - Qgrid,
     axial_round_2(X, Y, Rgrid, Qgrid, Round_R, Round_Q).
 
 axial_round_2(X, Y, Rgrid, Qgrid, Round_R, Round_Q):- 
     abs(X) >= abs(Y),
-    Round_R = Rgrid + round(X + 0.5*Y),
-    Round_Q = Qgrid, !.
+    Round_R is Rgrid + round(X + 0.5*Y),
+    Round_Q is Qgrid, !.
 
 axial_round_2(X, Y, Rgrid, Qgrid, Round_R, Round_Q):- 
     abs(X) < abs(Y),
-    Round_R = Rgrid,
-    Round_Q = Qgrid + round(Y + 0.5 *X), !.
+    Round_R is Rgrid,
+    Round_Q is Qgrid + round(Y + 0.5 *X), !.
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

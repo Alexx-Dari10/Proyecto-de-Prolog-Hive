@@ -1,5 +1,5 @@
 module(insects, [
-        start_insects/1, insect/5, possible_moves/8, move_insect_db/7
+        start_insects/3, insect/5, possible_moves/8, move_insect_db/7
     ]).
 
 :- consult(hexagon), import(hexagon).
@@ -10,26 +10,29 @@ module(insects, [
 
 :- dynamic insect/5.
 
-start_insects(Player):- 
-    assert(insect(abejaReina, 1, Player, none, -1)),
+start_insects(Player,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):- 
+    
+    assert(insect(hormiga, 1, Player, [X1,Y1], -1)),
+    assert(insect(hormiga, 2, Player, [X1, Y2], -1)),
+    assert(insect(hormiga, 3, Player, [X1, Y3], -1)),
 
-    assert(insect(hormiga, 1, Player, none, -1)),
-    assert(insect(hormiga, 2, Player, none, -1)),
-    assert(insect(hormiga, 3, Player, none, -1)),
+    assert(insect(escarabajo, 1, Player, [X2, Y1], -1)),
+    assert(insect(escarabajo, 2, Player, [X2, Y2], -1)),
 
-    assert(insect(saltamonte, 1, Player, none, -1)),
-    assert(insect(saltamonte, 2, Player, none, -1)),
-    assert(insect(saltamonte, 3, Player, none, -1)),
+    assert(insect(saltamonte, 1, Player, [X3, Y1], -1)),
+    assert(insect(saltamonte, 2, Player, [X3, Y2], -1)),
+    assert(insect(saltamonte, 3, Player, [X3, Y3], -1)),
 
-    assert(insect(escarabajo, 1, Player, none, -1)),
-    assert(insect(escarabajo, 2, Player, none, -1)),
+    assert(insect(abejaReina, 1, Player, [X4, Y1], -1)),
 
-    assert(insect(aranha, 1, Player, none, -1)),
-    assert(insect(aranha, 2, Player, none, -1)),
+    assert(insect(aranha, 1, Player, [X5, Y1], -1)),
+    assert(insect(aranha, 2, Player, [X5, Y2], -1)),
 
-    assert(insect(mosquito, 1, Player, none, -1)),
-    assert(insect(mariquita, 1, Player, none, -1)),
-    assert(insect(bichoBola, 1, Player, none, -1)).
+    assert(insect(mariquita, 1, Player, [X6, Y1], -1)),
+
+    assert(insect(mosquito, 1, Player, [X7, Y1], -1)),
+
+    assert(insect(bichoBola, 1, Player, [X8, Y1], -1)).
 
 
 
@@ -154,7 +157,7 @@ add_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         Moves
     ).
 
-% este metodo es para revisar q ninguna ficha alrededor es del adversario
+% este predicado es para revisar q ninguna ficha alrededor es del adversario
 check_Hex_same_color(Player_id, Hex, L_hive):-
 
     findall(Neighbor, 
