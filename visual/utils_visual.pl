@@ -2,40 +2,29 @@
 :- pce_image_directory('./images').
 
 module(utils_visual, [
-    pixel_to_axial/3, axial_to_pixel/3, get_X_Y_to_Pixel_to_flat_hex_and_Flat_hex_to_pixel/5,
-    flat_hex_corner/4, new_image/4
+    pixel_to_axial/3, axial_to_pixel/5, get_X_Y_to_Pixel_to_flat_hex_and_Flat_hex_to_pixel/5,
+    flat_hex_corner/4, new_image/4, check_positions_in_hand/6, check_position_in_hive/4
 ]).
 
 :-consult('../hexagon'), import('../hexagon').
 :-consult('../insects'), import('../insects').
 
 
-% este predicado es para tener la colmena centrada con el (0,0) en el centro de la pantalla
-pixel_to_axial([X_pixel,Y_pixel], [X_axial,Y_axial], Size_hex):- 
-    hexagon:pixel_to_flat_hex(X_pixel,Y_pixel,Size_hex,[H_x, H_y]),
+% restamos o sumamos la mitad del tamanho del tablero para tener coordenadas en el centro 
+pixel_to_axial([X_pixel,Y_pixel], [X_axial,Y_axial], Size_hex,Size_x, Size_y):-
 
-    get_X_Y_to_Pixel_to_flat_hex_and_Flat_hex_to_pixel(1000, 800,Size_hex, [PF_x,PF_y], [FP_x,FP_y]),
+    X is X_pixel - Size_x/2,
+    Y is Y_pixel - Size_y/2,
+
+    hexagon:pixel_to_flat_hex(X,Y,Size_hex,[X_axial, Y_axial]).
+
+
+axial_to_pixel([X_axial,Y_axial], [X_pixel,Y_pixel], Size_hex, Size_x, Size_y):-
+    hexagon:flat_hex_to_pixel(X_axial,Y_axial, Size_hex, [P_x, P_y]),
     
-    X_axial is H_x- PF_x,
-    Y_axial is H_y - PF_y.
+    X_pixel is P_x + Size_x/2 ,
+    Y_pixel is P_y + Size_y/2 .
 
-
-axial_to_pixel([X_axial,Y_axial], [X_pixel,Y_pixel], Size_hex):-
-    hexagon:flat_hex_to_pixel(X_axial,Y_axial, Size_hex, [P_x, P_y]) ,
-    
-    get_X_Y_to_Pixel_to_flat_hex_and_Flat_hex_to_pixel(1000, 800,Size_hex, [PF_x,PF_y], [FP_x,FP_y]),
-    
-    X_pixel is P_x + FP_x ,
-    Y_pixel is P_y + FP_y .
-
-
-
-
-get_X_Y_to_Pixel_to_flat_hex_and_Flat_hex_to_pixel(Size_x, Size_y,Size_hex, [PF_x,PF_y], [FP_x,FP_y]):-
-
-    FP_x is Size_x/2,
-    FP_y is Size_y/2,
-    hexagon:pixel_to_flat_hex(FP_x,FP_y,Size_hex,[PF_x, PF_y]).
 
 
 flat_hex_corner([X,Y], Size, I, [Corner_x, Corner_y]):-
@@ -53,3 +42,64 @@ new_image(Window, Figure, Image, Position) :-
     send(Figure, display, Bitmap),
     send(Figure, status, 1),
     send(Window, display, Figure, Position).
+
+
+check_positions_in_hand([Pixel_x, Pixel_y],Size_hex,[X1,X2,X3,X4,X5,X6,X7,X8],[Y1,Y3],Type, In_hand):-
+    (   
+        check_limits([Pixel_x,Pixel_y],[X1,Y1,Y3], Size_hex),
+        Type = hormiga,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X2,Y1,Y3], Size_hex),
+        Type = escarabajo,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X3,Y1,Y3], Size_hex),
+        Type = saltamonte,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X4,Y1,Y3], Size_hex),
+        Type = abejaReina,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X5,Y1,Y3], Size_hex),
+        Type = aranha,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X6,Y1,Y3], Size_hex),
+        Type = mariquita,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X7,Y1,Y3], Size_hex),
+        Type = mosquito,
+        In_hand = true
+    ),!;
+    (
+        check_limits([Pixel_x,Pixel_y],[X8,Y1,Y3], Size_hex),
+        Type = bichoBola,
+        In_hand = true
+    ),!;
+    (
+        In_hand = false
+    ).
+
+check_limits([Pixel_x, Pixel_y], [Xi, Y1, Y3], Size_hex):-
+    Pixel_y < Y3 + Size_hex,
+    Pixel_y > Y1 - Size_hex,
+    Pixel_x < Xi + Size_hex,
+    Pixel_x > Xi - Size_hex.
+
+check_position_in_hive([Click_X, Click_Y],Size_hex, [X_ini, X_end], [Y_ini,Y_end]):-
+    Click_X > X_ini - Size_hex, 
+    Click_X < X_end + Size_hex,
+    Click_Y > Y_ini + Size_hex,
+    Click_Y < Y_end - Size_hex.
+
+
+

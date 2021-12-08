@@ -9,11 +9,7 @@
 start_game():-
     assert(hive([])),
     assert(player(p1, 0, true, true)),
-    assert(player(p2, 0, false, true)),
-    insects:start_insects(p1),
-    insects:start_insects(p2).
-
-
+    assert(player(p2, 0, false, true)).
 
 
 move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
