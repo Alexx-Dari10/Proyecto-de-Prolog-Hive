@@ -5,7 +5,7 @@
 module(draw_visual,[
         draw_image_hexagon/4, draw_hexagon_axial/8, draw_hexagon_pixel/5, 
         draw_hexagon_pixel_axial/5, draw_possible_movements/4, draw_initials_pieces/5,
-        draw_hexagon_pixel_empty/4
+        draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4
     ]).
 
 :-consult('../hexagon'), import('../hexagon').
@@ -108,18 +108,35 @@ draw_hexagon_pixel(W, [Point_x, Point_y], Size_hex, Image, Color):-
     draw_image_hexagon(W, Image, [Point_x, Point_y]).
 
 
-draw_hexagon_pixel_empty(W, [Point_x, Point_y], Size_hex, Color):-
+draw_hexagon_pixel_empty(W, [Point_x,Point_y], Size_hex, Color):-
     
-    flat_hex_corner([Point_x, Point_y], Size_hex, 1, [Corner_1_x, Corner_1_y]),
-    flat_hex_corner([Point_x, Point_y], Size_hex, 2, [Corner_2_x, Corner_2_y]),
-    flat_hex_corner([Point_x, Point_y], Size_hex, 3, [Corner_3_x, Corner_3_y]),
-    flat_hex_corner([Point_x, Point_y], Size_hex, 4, [Corner_4_x, Corner_4_y]),
-    flat_hex_corner([Point_x, Point_y], Size_hex, 5, [Corner_5_x, Corner_5_y]),
-    flat_hex_corner([Point_x, Point_y], Size_hex, 6, [Corner_6_x, Corner_6_y]),
+    
+    
+    flat_hex_corner([Point_x,Point_y], Size_hex, 1, [Corner_1_x,Corner_1_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 2, [Corner_2_x,Corner_2_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 3, [Corner_3_x,Corner_3_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 4, [Corner_4_x,Corner_4_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 5, [Corner_5_x,Corner_5_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 6, [Corner_6_x,Corner_6_y]),
 
+   
     draw_foreground_hex(W, [Corner_1_x, Corner_1_y],[Corner_2_x, Corner_2_y],[Corner_3_x, Corner_3_y],
     [Corner_4_x, Corner_4_y],[Corner_5_x, Corner_5_y],[Corner_6_x, Corner_6_y], Color).
     
+
+draw_hexagon_pixel_filling(W, [Point_x,Point_y], Size_hex, Color):-
+    
+    flat_hex_corner([Point_x,Point_y], Size_hex, 1, [Corner_1_x,Corner_1_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 2, [Corner_2_x,Corner_2_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 3, [Corner_3_x,Corner_3_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 4, [Corner_4_x,Corner_4_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 5, [Corner_5_x,Corner_5_y]),
+    flat_hex_corner([Point_x,Point_y], Size_hex, 6, [Corner_6_x,Corner_6_y]),
+
+    
+   
+    draw_background_hex(W, [Corner_1_x, Corner_1_y],[Corner_2_x, Corner_2_y],[Corner_3_x, Corner_3_y],
+    [Corner_4_x, Corner_4_y],[Corner_5_x, Corner_5_y],[Corner_6_x, Corner_6_y], Color).
 
 
 draw_hexagon_pixel_axial(W, [Pixel_x, Pixel_y], Size_hex,Size_x, Size_y, Image, Color):-
