@@ -6,8 +6,9 @@ module(utils_visual, [
     flat_hex_corner/4, new_image/4, check_positions_in_hand/5, check_position_in_hive/4
 ]).
 
+
+
 :-consult('../hexagon'), import('../hexagon').
-:-consult('../insects'), import('../insects').
 
 
 % restamos o sumamos la mitad del tamanho del tablero para tener coordenadas en el centro 
@@ -92,76 +93,3 @@ check_position_in_hive([Click_X, Click_Y],Size_hex, [X_ini, X_end], [Y_ini,Y_end
     Click_Y < Y_end - Size_hex.
 
 
-
-set_hex_to_type(Type, Id, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
-    (
-        Id == 3,
-        (
-            ( Type == hormiga, Hex_select = [X1,Y3] );
-            ( Type == escarabajo, Hex_select = [X2,Y3] );
-            ( Type == saltamonte, Hex_select = [X3,Y3] );
-            ( Type == abejaReina, Hex_select = [X4,Y3] );
-            ( Type == aranha, Hex_select = [X5,Y3] );
-            ( Type == mariquita, Hex_select = [X6,Y3] );
-            ( Type == mosquito, Hex_select = [X7,Y3] );
-            ( Type == bichoBola, Hex_select = [X8,Y3] )
-        )
-    );
-    (
-        Id == 2,
-        (
-            (Type == hormiga,Hex_select = [X1,Y2]);
-            (Type == escarabajo,Hex_select = [X2,Y2]);
-            (Type == saltamonte,Hex_select = [X3,Y2]);
-            (Type == abejaReina,Hex_select = [X4,Y2]);
-            (Type == aranha,Hex_select = [X5,Y2]);
-            (Type == mariquita,Hex_select = [X6,Y2]);
-            (Type == mosquito,Hex_select = [X7,Y2]);
-            (Type == bichoBola,Hex_select = [X8,Y2])
-        )
-    );
-    (
-        Id == 1,
-        (
-            (Type == hormiga,Hex_select = [X1,Y1]);
-            (Type == escarabajo,Hex_select = [X2,Y1]);
-            (Type == saltamonte,Hex_select = [X3,Y1]);
-            (Type == abejaReina,Hex_select = [X4,Y1]);
-            (Type == aranha,Hex_select = [X5,Y1]);
-            (Type == mariquita,Hex_select = [X6,Y1]);
-            (Type == mosquito,Hex_select = [X7,Y1]);
-            (Type == bichoBola,Hex_select = [X8,Y1] )   
-        ) 
-    ).
-
-
-
-select_in_hand(Type, Player_id , Hex_select, Id,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
-    (
-        findall(Type, insect(Type,_,Player_id, _, -1), L_insects),
-        length(L_insects, Length),
-        Length == 3,
-        Id = 3,
-        writeln("3"),
-        
-        set_hex_to_type(Type, 3, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
-    ),!;
-    (
-        
-        findall(Type, insect(Type,_,Player_id, _, -1), L_insects),
-        length(L_insects, Length),
-        Length == 2,
-        Id = 2,
-        writeln("2"),
-        set_hex_to_type(Type, 2, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
-    ),!;
-    (
-        findall(Type, insect(Type,_,Player_id, _, -1), L_insects),
-        length(L_insects, Length),
-        Length == 1,
-        Id = 1,
-        writeln("1"),
-        set_hex_to_type(Type, 1, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
-    ).
-    
-    

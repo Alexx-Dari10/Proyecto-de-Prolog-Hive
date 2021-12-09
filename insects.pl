@@ -1,5 +1,6 @@
 module(insects, [
-        start_insects/3, insect/5, possible_moves/8, move_insect_db/7
+        start_insects/3, insect/5, possible_moves/8, move_insect_db/6, move_insect/8,start_game/0,
+        set_hex_to_type/5, select_in_hand/6
     ]).
 
 :- consult(hexagon), import(hexagon).
@@ -8,7 +9,188 @@ module(insects, [
 % si level = -1 entonces la ficha no ha sido puesta en juego
 % insect(Type, Id, Player_id, Hex=[R,Q], Level)
 
-:- dynamic insect/5.
+:- dynamic insect/5,  hive/1 .
+:- dynamic player/4, add_queen/1.
+
+start_game():-
+    assert(hive([])),
+    assert(player(p1, 0, true, true)),
+    assert(player(p2, 0, false, true)).
+
+
+
+
+move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
+    (
+        Val == init,
+        
+        possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        
+        member(Hex_fin, Moves),
+       
+        move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin)
+        
+    );
+    (
+        Val == add,
+        not(must_add_queen(Player_id)),
+        possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        member(Hex_fin, Moves),
+        move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin)
+        
+    );
+    (
+        Val == add,
+        must_add_queen(Player_id),
+        not(Type == abejaReina),
+        Msg = "Debe agregar la abeja reina",
+        writeln("Debe agregar la abeja reina")
+    );
+    (
+        not(Val == init),
+        not(Val == add),
+        not(queen_in_game(Player_id)),
+        Msg = "No puede moverse ninguna ficha hasta que la reina este en juego",
+        writeln("No puede moverse ninguna ficha hasta que la reina este en juego")
+    );
+    (
+        not(Val == init),
+        not(Val == add),
+        queen_in_game(Player_id),
+        possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+/* 
+Chequear si es mosquito o escarabajo ponerle 1 nivel mas
+        member(Hex_fin, L_hive),!, % ya hay otra ficha en esta posicion
+        %quito la ficha con el nivel que tenga y la pongo en un nivel mas
+        %NOTA: ver los niveles como las posiciones de una pila (el q esta en el nivel 0 esta en el tope de la pila) 
+ */
+        member(Hex_fin, Moves),
+        move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin)
+    ).
+        
+    
+
+%esto no esta bien revisar ahora
+change_player_turn(Type, Player_id, Hex, Level, Hex_fin, L_hive):-
+    (
+        % elimina el jugador que es current ahora 
+        writeln("change_player_turn"),
+        retract(player(Player_id, Moves, Current,Init)),
+        % busca el otro jugador que hay en la base de datos y lo pone como current si este puede jugar
+        
+        player(Id_other, Moves_other, false, Init_other),
+        
+        
+
+        player_can_play(Id_other, L_hive),
+        writeln("can play"),
+        retract(player(Id_other, Moves_other, _, Init_other)),
+        assert(player(Id_other, Moves_other, true, Init_other)),
+        
+        % agrega al jugador que hizo la jugada con un movimiento mas
+        Moves_new is Moves + 1,
+        assert(player(Player_id, Moves_new, false, false))
+    );
+    (
+        writeln("aqui entra alguna vez?"),
+        % elimina el jugador que es current ahora con su cantidad de movimientos 
+        retract(player(Player_id, Moves, Current,Init)),
+        % busca el otro jugador que hay en la base de datos y lo pone como current si este puede jugar
+        player(Id, Moves_other, false, Init_other),
+        not(player_can_play(Id, L_hive)),
+
+        % agrega al jugador que hizo la jugada con un movimiento mas
+        Moves_new is Moves + 1,
+        assert(player(Player_id, Moves_new, true, false))
+    ).
+
+queen_in_game(Player_id):-
+    insect(abejaReina, Id, Player_id, Hex, Level),
+    bigger(Level, -1).
+
+% mira si ya es el cuarto movimiento a realizar y la reina no ha jugado
+must_add_queen(Player_id):-
+    not(queen_in_game(Player_id)),
+    player(Id, Moves, Current,_),
+    player(Player_id, Moves, true, _),
+    Moves == 3.
+
+
+player_can_play(Player_id, L_hive):-
+    
+     % for para recorrer todos los insectos de la mano, del jugador 
+     (
+        findall([Type, Id, Player_id,Hex,-1], 
+                insect(Type, Id, Player_id,Hex, -1), 
+                Insects_hand),
+        
+       
+        member([Type, Id, Player_id_memb ,Hex,Level], Insects_hand),
+        possible_moves(init, Type, Id, Player_id_memb , Hex, Level, Moves, L_hive),
+        writeln(Moves),
+        length(Moves, Length),
+
+        hexagon:bigger(Length, 0),
+         ! % si encuentro uno q se mueva mover entonces ya esta
+    );
+
+    % for para recorrer todos los insectos de la mano, del jugador 
+    (
+        findall([Type, Id, Player_id,Hex,-1], 
+                insect(Type, Id, Player_id,Hex, -1), 
+                Insects_hand),
+        
+       
+        member([Type, Id, Player_id_memb ,Hex,Level], Insects_hand),
+        possible_moves(add, Type, Id, Player_id_memb , Hex, Level, Moves, L_hive),
+        length(Moves, Length),
+
+        hexagon:bigger(Length, 0),
+         ! % si encuentro uno q se mueva mover entonces ya esta
+    );
+    % for para recorrer todos los insectos de la colmena, del jugador
+    (
+        findall([Type, Id, Player_id,Hex,Level], 
+            ((Type, Id, Player_id,Hex, Level), bigger(Level,-1)), 
+            Insects_hive),
+
+        member([Type, Player_id_memb, Player_id,Hex,Level], Insects_hive), 
+        insects:possible_moves(Type, Type, Id, Player_id_memb , Hex, Level, Moves, L_hive),
+        length(Moves, Length),
+        hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
+    ).
+
+% juego terminado 
+end_game(Player_id, L_hive):-
+    insect(abejaReina, Id, Player_id, Hex, Level),
+    member(Hex, L_hive),
+    findall(Hex_neighbor, 
+            (hexagon:are_neighbors(Hex,Hex_neighbor), member(Hex_neighbor,L_hive)), 
+            L_neighbors),
+    
+    length(L_neighbors, Length),
+    Length == 6,
+    writeln("Fin de la partida. Perdio: "),
+    writeln(Player_id).
+    
+
+% juego empatado  
+tie_game(Player_id1, Player_id2, L_hive):-
+    end_game(Player_id1, L_hive),
+    end_game(Player_id2, L_hive),
+    writeln("Juego empatado").   
+    
+
+game():-
+    start_game().
+
+
+restart_game():-
+    retractall(player(_,_,_,_)),
+    retractall(insects:insect(_,_,_,_,_)),
+    start_game().
+
+
 
 start_insects(Player,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):- 
     
@@ -38,17 +220,11 @@ start_insects(Player,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
 
 % actualizar los movimientos del insecto en la base de datos
 
-move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
+move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
     
     (
-        (Type = escarabajo,!; Type = mosquito),
-        member(Hex_fin, L_hive), % ya hay otra ficha en esta posicion
-        %quito la ficha con el nivel que tenga y la pongo en un nivel mas
-        %NOTA: ver los niveles como las posiciones de una pila (el q esta en el nivel 0 esta en el tope de la pila) 
-        retract(insect(Type2, Id2, Player_id2,Hex_fin, Level1)),
-        Level2 is Level1 + 1,
-        assert(insect(Type2, Id2, Player_id2,Hex_fin, Level2)),
-
+        hive(L_hive),
+        
         % agrega el insecto a la colmena poniendole nivel 0
         retract(insect(Type, Id, Player_id,Hex, _)),
         assert(insect(Type, Id, Player_id, Hex_fin, Level)),
@@ -59,8 +235,14 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin, L_hive):-
         append(L_1, [Hex_fin], L_2),
         retract(hive(L_hive)),
         assert(hive(L_2))
+        
     );
     (
+        writeln("Estoy en el metodo db"),
+        hive(L_hive),
+        writeln("hive"),
+        writeln(L_hive),
+
         % agrega el insecto a la colmena poniendole nivel 0
         retract(insect(Type, Id, Player_id,Hex, _)),
         assert(insect(Type, Id, Player_id, Hex_fin, Level)),
@@ -131,7 +313,7 @@ possible_moves(Val, Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 init_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     (
         Player_id == p1,
-        Moves = [0, 0]
+        Moves = [[0, 0]]
     );
     (
         Player_id == p2,
@@ -145,33 +327,41 @@ init_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 
 % Fichas para agregar
 add_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
+   
     findall(
-        Hex, 
+        Hex_neighbor, 
         (
-            findall(Hex, insect(_,_,Player_id,Hex,_), L_insects_same_color),
-            member(Insect, L_insects_same_color),
-            not(cell_in_center(Hex,L_hive)),
-            hexagon:are_neighbors(Insect, Hex_neighbor),
-            check_Hex_same_color(Player_id, Hex_neighbor, L_hive)
+            insect(_,_,Player_id, Hex_insect, Level1),
+            bigger(Level1,-1),
+            are_neighbors(Hex_insect, Hex_neighbor),
+            not(member(Hex_neighbor, L_hive)),
+            %not(cell_in_center(Hex,L_hive)),
+            valid_hex(Player_id, Hex_neighbor, L_hive)
         ),
-        Moves
-    ).
+        Moves1
+    ),
+    utils:remove_repeated(Moves1, Moves).
 
 % este predicado es para revisar q ninguna ficha alrededor es del adversario
-check_Hex_same_color(Player_id, Hex, L_hive):-
-
+valid_hex(Player_id, Hex_neighbor, L_hive):-
+    writeln("Checking"),
     findall(Neighbor, 
-            (hexagon:are_neighbors(Hex, Neighbor), % para ir por cada vecino
-            is_same_color_or_white(Player_id, Player_id2, Neighbor, L_hive)), 
+            (
+                are_neighbors(Hex_neighbor, Neighbor), % para ir por cada vecino
+                
+                is_same_color_or_empty(Player_id, Neighbor, L_hive)
+            ), 
             List_neighbor),
+    writeln(List_neighbor),
     length(List_neighbor, 6). % si todas las casillas alrededor son del mismo color o estan vacias
     
     
     
 % analizo si la casilla es un insecto del mismo color o la casilla no esta en la colmena(o sea esta en blanco)
-is_same_color_or_white(Player_id, Player_id2, Neighbor, L_hive):-
-    (insect(_, _, Player_id2, Neighbor, _), Player_id == Player_id2), ! ; 
+is_same_color_or_empty(Player_id, Neighbor, L_hive):-
+    insect(_, _, Player_id, Neighbor,_), ! ; 
     not(member(Neighbor, L_hive)).
+    
 
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -456,3 +646,84 @@ bichoBola_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     ).
     % falta hacer la habilidad especial
     % preguntar si es dar click sobre ella y la ficha q se va a mover
+
+
+
+
+
+
+
+select_in_hand(Type, Player_id , Hex_select, Id,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
+        (
+            findall(Type, insect(Type,_,Player_id, _, -1), L_insects),
+            length(L_insects, Length),
+            Length == 3,
+            Id = 3,
+            writeln("3"),
+            
+            set_hex_to_type(Type, 3, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
+        ),!;
+        (
+            
+            findall(Type, insect(Type,_,Player_id, _, -1), L_insects),
+            length(L_insects, Length),
+            Length == 2,
+            Id = 2,
+            writeln("2"),
+            set_hex_to_type(Type, 2, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
+        ),!;
+        (
+            findall(Type, insect(Type,_,Player_id, _, -1), L_insects),
+            length(L_insects, Length),
+            Length == 1,
+            Id = 1,
+            writeln("1"),
+            set_hex_to_type(Type, 1, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
+        ).
+
+
+set_hex_to_type(Type, Id, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
+        (
+            Id == 3,
+            (
+                ( Type == hormiga, Hex_select = [X1,Y3] );
+                ( Type == escarabajo, Hex_select = [X2,Y3] );
+                ( Type == saltamonte, Hex_select = [X3,Y3] );
+                ( Type == abejaReina, Hex_select = [X4,Y3] );
+                ( Type == aranha, Hex_select = [X5,Y3] );
+                ( Type == mariquita, Hex_select = [X6,Y3] );
+                ( Type == mosquito, Hex_select = [X7,Y3] );
+                ( Type == bichoBola, Hex_select = [X8,Y3] )
+            )
+        );
+        (
+            Id == 2,
+            (
+                (Type == hormiga,Hex_select = [X1,Y2]);
+                (Type == escarabajo,Hex_select = [X2,Y2]);
+                (Type == saltamonte,Hex_select = [X3,Y2]);
+                (Type == abejaReina,Hex_select = [X4,Y2]);
+                (Type == aranha,Hex_select = [X5,Y2]);
+                (Type == mariquita,Hex_select = [X6,Y2]);
+                (Type == mosquito,Hex_select = [X7,Y2]);
+                (Type == bichoBola,Hex_select = [X8,Y2])
+            )
+        );
+        (
+            Id == 1,
+            (
+                (Type == hormiga,Hex_select = [X1,Y1]);
+                (Type == escarabajo,Hex_select = [X2,Y1]);
+                (Type == saltamonte,Hex_select = [X3,Y1]);
+                (Type == abejaReina,Hex_select = [X4,Y1]);
+                (Type == aranha,Hex_select = [X5,Y1]);
+                (Type == mariquita,Hex_select = [X6,Y1]);
+                (Type == mosquito,Hex_select = [X7,Y1]);
+                (Type == bichoBola,Hex_select = [X8,Y1] )   
+            ) 
+        ).
+    
+    
+    
+        
+    

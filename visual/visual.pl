@@ -4,11 +4,15 @@
 :-consult('../hexagon'), import('../hexagon').
 :-consult('../insects'), import('../insects').
 
+:-consult('utils_visual'), import('utils_visual').
+
 :-consult('draw_visual'), import('draw_visual').
 
-:-dynamic size_hex/1, size_x/1, size_y/1.
-:-dynamic bool_selected/1, piece_selected/5.
+:-dynamic size_hex/1, size_y/1, size_x/1, bool_selected/1, piece_selected/5,pieces/4, init_player/2, move_state/1.
 
+% move_state/1 es para llevar el estado de la ficha seleccionada: init, add, move
+
+% pieces(Player_id, Type, Initial_pieces, In_hive_pieces)
 
 resource(cero, image,image('0.jpg')).
 resource(uno, image,image('1.jpg')).
@@ -23,12 +27,40 @@ resource(mariquita, image,image('mariquita.jpg')).
 resource(bichoBola, image,image('bichoBola.jpg')).
 
 main:-
+    insects:start_game(),
+
     assert(bool_selected(false)),
     assert(piece_selected(_,_,_,_,_)),
     assert(size_hex(35)),
     assert(size_x(800)),
     assert(size_y(800)),
+
+    assert(init_player(p1,true)),
+    assert(init_player(p2,true)),
+
+    assert(move_state(init)),
     
+
+    %Variables
+    assert(pieces(p1, hormiga    ,[[40,40],  [40,70],  [40, 100]], [])),
+    assert(pieces(p1, escarabajo ,[[120,40], [120,70]           ], [])),
+    assert(pieces(p1, saltamonte ,[[200,40], [200,70], [200,100]], [])),
+    assert(pieces(p1, abejaReina ,[[280,40]                     ], [])),
+    assert(pieces(p1, aranha     ,[[360,40], [360,70]           ], [])),
+    assert(pieces(p1, mariquita  ,[[440,40]                     ], [])),
+    assert(pieces(p1, mosquito   ,[[520,40]                     ], [])),
+    assert(pieces(p1, bichoBola  ,[[600,40]                     ], [])),
+
+    assert(pieces(p2, hormiga    ,[[40,700 ], [40,730 ],[40, 760]], [])),
+    assert(pieces(p2, escarabajo ,[[120,700], [120,730]          ], [])),
+    assert(pieces(p2, saltamonte ,[[200,700], [200,730],[200,760]], [])),
+    assert(pieces(p2, abejaReina ,[[280,700]                     ], [])),
+    assert(pieces(p2, aranha     ,[[360,700], [360,730]          ], [])),
+    assert(pieces(p2, mariquita  ,[[440,700]                     ], [])),
+    assert(pieces(p2, mosquito   ,[[520,700]                     ], [])),
+    assert(pieces(p2, bichoBola  ,[[600,700]                     ], [])),
+
+
     size_hex(Size_hex),
     size_x(Size_x),
     size_y(Size_y),
@@ -41,12 +73,49 @@ main:-
     insects:start_insects(p1, [40,120,200,280,360,440,520,600], [40,70,100]),
     insects:start_insects(p2, [40,120,200,280,360,440,520,600], [700,730,760]),
          
-    
-    draw_initials_pieces(W, Size_hex, colour(white), [40,120,200,280,360,440,520,600], [40,70,100]),
-    draw_initials_pieces(W, Size_hex, colour(black), [40,120,200,280,360,440,520,600], [700,730,760]),
-    
-    draw_possible_movements(W, [[0,0],[1,0],[2,0]], Size_hex,Size_x,Size_y, colour(blue)),
+    draw_game(W, Size_hex),
+
     send(W, open).
+
+
+draw_game(W, Size_hex):-
+    clear_game(W), 
+    %pinta las piezas del jugador 1
+    findall(_, 
+            (
+                pieces(p1, Type, Initials, In_hive),
+                (
+                    (
+                        draw_pieces(W, p1,Size_hex,Type, Initials),
+                        draw_pieces(W, p1,Size_hex,Type, In_hive)
+                    ); 
+                    (
+                        draw_pieces(W, p1,Size_hex,Type, In_hive),
+                        draw_pieces(W, p1,Size_hex,Type, Initials)
+                    )
+                )
+            ), _),
+    
+    %pinta las piezas del jugador 2
+
+    findall(_, 
+        (
+            pieces(p2, Type, Initials2, In_hive2),
+            (
+                (
+                    draw_pieces(W, p2,Size_hex,Type, Initials2),
+                    draw_pieces(W, p2,Size_hex,Type, In_hive2)
+                ); 
+                (
+                    draw_pieces(W, p2,Size_hex,Type, In_hive2),
+                    draw_pieces(W, p2,Size_hex,Type, Initials2)
+                )
+            )
+        ), _).
+
+
+
+clear_game(W):- send(W, clear).
 
 
 
@@ -57,62 +126,94 @@ event_click(W):-
 
 
 
+
+check_init_add(W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
+    (
+        %init
+        init_player(Player_id, true),
+        writeln("Init"),
+        
+        bool_selected(false),
+
+        Size_hex is 35,
+        Size_x is 800, 
+        Size_y is 800,
+        get(Position, x, Click_X),
+        get(Position, y, Click_Y),
+        check_positions_in_hand([Click_X,Click_Y], Size_hex, 
+                                [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y3], Type),
+        
+        
+        select_in_hand(Type, Player_id, Hex_select, Id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]),
+        
+        
+        draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),
+        
+        hive(L_hive),
+
+        possible_moves(init, Type, Id, Player_id , Hex_select, -1, Moves, L_hive),
+
+        
+
+        draw_possible_movements(W, Moves, Size_hex,Size_x,Size_y, colour(blue)),
+
+
+        !, % este corte es para q no entre a las otras partes
+        assert(move_state(init)),
+
+        retract(bool_selected(false)),
+        assert(bool_selected(true)),
+
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type,Id,Player_id,Hex_select,-1)),!
+    );
+    (
+        %add
+        init_player(Player_id, false),
+        
+        bool_selected(false),
+        writeln("add"),
+
+
+        Size_hex is 35,
+        Size_x is 800, 
+        Size_y is 800,
+        get(Position, x, Click_X),
+        get(Position, y, Click_Y),
+        check_positions_in_hand([Click_X,Click_Y], Size_hex, 
+                [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y3], Type),
+        
+        
+        select_in_hand(Type, Player_id, Hex_select, Id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2, Y3]),
+        
+        
+
+        draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),   
+        
+        hive(L_hive),
+        possible_moves(add, Type, Id, Player_id , Hex_select, -1, Moves, L_hive),
+        
+        draw_possible_movements(W, Moves, Size_hex,Size_x,Size_y, colour(blue)),
+
+        !, % este corte es para q no entre a las otras partes
+
+        assert(move_state(add)),
+
+        retract(bool_selected(false)),
+        assert(bool_selected(true)),
+
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type,Id,Player_id,Hex_select,-1)),!
+        
+    ).
+
+
 select_piece(W, Position):-
         (
-            writeln("1ero"),
-            bool_selected(false),
-            %Player 1
-            Size_hex is 35,
-            Size_x is 800, 
-            Size_y is 800,
-            get(Position, x, Click_X),
-            get(Position, y, Click_Y),
-            check_positions_in_hand([Click_X,Click_Y], Size_hex, 
-                                    [40,120,200,280,360,440,520,600], [40,100], Type),
-            
-            
-            select_in_hand(Type, p1, Hex_select, Id, [40,120,200,280,360,440,520,600], [40,70,100]),
-            
-            
-            draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),
-
-
-
-            !, % este corte es para q no entre a las otras partes
-
-            retract(bool_selected(false)),
-            assert(bool_selected(true)),
-
-            retract(piece_selected(_,_,_,_,_)),
-            assert(piece_selected(Type,Id,p1,Hex_select,-1)),!
-            
+            check_init_add(W,Position, p1, [40,120,200,280,360,440,520,600], [40,70,100])
         );
         (
-            writeln("2do"),
-            bool_selected(false),
-            %Player 2
-
-            Size_hex is 35,
-            Size_x is 800, 
-            Size_y is 800,
-            get(Position, x, Click_X),
-            get(Position, y, Click_Y),
-            check_positions_in_hand([Click_X,Click_Y], Size_hex, 
-                                    [40,120,200,280,360,440,520,600], [700,760], Type),
-            
-
-            select_in_hand(Type, p2, Hex_select, Id, [40,120,200,280,360,440,520,600], [700,730,760]),
-
-            draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),
-            
-            !, % este corte es para q no entre a las otras partes
-
-            retract(bool_selected(false)),
-            assert(bool_selected(true)),
-
-            retract(piece_selected(_,_,_,_,_)),
-            assert(piece_selected(Type,Id,p2,Hex_select,-1))
-            
+            check_init_add(W,Position, p2, [40,120,200,280,360,440,520,600], [700,730,760])
         );
         (
             bool_selected(false),
@@ -130,6 +231,8 @@ select_piece(W, Position):-
 
 
             !, % este corte es para q no entre a las otras partes
+            assert(move_state(move)),
+
             retract(bool_selected(false)),
             assert(bool_selected(true)),
 
@@ -138,59 +241,123 @@ select_piece(W, Position):-
         );
 
         (
-            writeln("4to"),
-            bool_selected(true),
-            
-            % ver xq se traba pa moverse
-            get(Position, x, Click_X),
-            get(Position, y, Click_Y),
-
-            %buscar insecto para q esta marcado
-            move_piece(W, [Click_X,Click_Y], abejaReina, black),
-
-            retract(bool_selected(true)),
-            assert(bool_selected(false)),
-
-            retract(piece_selected(_,_,_,_,_)),
-            assert(piece_selected(_,_,_,_,_)),!
-            
+            % mover la ficha seleccionada
+            move_state(Type),
+            (
+                (
+                    Type == init,
+                    make_move_state(W, Position,init)
+                );
+                (
+                    Type == add,
+                    make_move_state(W, Position,add)
+                );
+                (
+                    not(Type == init), not(Type == add),
+                    make_move_state(W, Position,Type)
+                )
+            )
         ).
    
-erase_piece(W,Hex_select, Size_hex,Color):-
+
+make_move_state(W, Position, Type_move):-
+    writeln("4to"),
+    bool_selected(true),
+    write("Esto es "), writeln(Type_move),
+    move_state(Type_move),
+
+    Size_hex is 35,
+    Size_x is 800, 
+    Size_y is 800,
     
+
+    
+    get(Position, x, Click_X),
+    get(Position, y, Click_Y),
+
+    %buscar insecto para q esta marcado
+    pixel_to_axial([Click_X,Click_Y], [X_axial,Y_axial], Size_hex,Size_x, Size_y),
+    
+    piece_selected(Type, Id, Player_id, Hex_ini, -1), % selected in hand
+    
+    hive(L_hive),
+
+    writeln([Type_move, Type, Id, Player_id, Hex_ini]),
+
+    move_insect(Type_move, Type, Id, Player_id, Hex_ini, -1, [X_axial,Y_axial],L_hive, Msg),
+    
+    
+    color_player(Player_id,Col),
+    
+
+    axial_to_pixel([X_axial,Y_axial], [X_pixel,Y_pixel], Size_hex, Size_x, Size_y),
+    
+    
+
+    move_piece(W, [X_pixel,Y_pixel], Type, Col), 
+    
+    
+    draw_game(W, Size_hex),
+
+
+    change_player_turn(Type, Player_id, Hex_ini, Level, Hex_fin, L_hive),
+    
+
+    retract(move_state(_)), % ya se movio la ficha
+
+    retract(init_player(Player_id, _)),
+    assert(init_player(Player_id, false)),
+
+    retract(bool_selected(true)),
+    assert(bool_selected(false)),
+
+    retract(piece_selected(_,_,_,_,_)),
+    assert(piece_selected(_,_,_,_,_)).
+        
+
+            
+
+% este predicado recibe las coordenadas en pixeles
+move_piece(W,Hex_end,Type, Color):-
     (
-        piece_selected(Type,Id,Player_id,Hex_select,Level),
-        Id > 1 ,
-        draw_hexagon_pixel_filling(W,Hex_select, Size_hex, Color),
-        writeln("Id"),
-        findall(Hex, (insect(Type,_,Player_id,Hex,-1),
-                draw_hexagon_pixel(W, Hex, Size_hex, Type, Color)), 
-                List_hex)
-    );
-    (
+        size_hex(Size_hex),
+        size_x(Size_x),
+        size_y(Size_y),
         
         piece_selected(Type,Id,Player_id,Hex_select,Level),
-        Id =< 1, 
-        draw_hexagon_pixel_filling(W,Hex_select, Size_hex, Color),
-        writeln("No hay mas insectos de este tipo en mano")
+
+        pieces(Player_id, Type, Initial_pieces, In_hive_pieces),
+
+
+        member(Hex_select, Initial_pieces),
+        
+        delete(Initial_pieces, Hex_select, Initial_pieces_1),
+
+
+        append(In_hive_pieces, [Hex_end], In_hive_pieces_1),
+
+        retract(pieces(Player_id, Type, Initial_pieces, In_hive_pieces)),
+        assert(pieces(Player_id, Type, Initial_pieces_1, In_hive_pieces_1))
+    );
+    (
+        size_hex(Size_hex),
+        size_x(Size_x),
+        size_y(Size_y),
+        
+        piece_selected(Type,Id,Player_id,Hex_select,Level),
+
+        pieces(Player_id, Type, Initial_pieces, In_hive_pieces),
+
+        not(member(Hex_select, Initial_pieces)),
+        
+        member(Hex_select, In_hive_pieces),
+        delete(In_hive_pieces, Hex_select, In_hive_pieces_1),
+        append(In_hive_pieces_1, [Hex_end], In_hive_pieces_2),!,
+
+        retract(pieces(Player_id, Type, Initial_pieces, In_hive_pieces)),
+        assert(pieces(Player_id, Type, Initial_pieces, In_hive_pieces_2))
     ).
 
-    
-
-
-move_piece(W,Hex_end,Type, Color):-
-    
-    size_hex(Size_hex),
-    size_x(Size_x),
-    size_y(Size_y),
-    
-    piece_selected(Type,Id,Player_id,Hex_select,Level),
-
-    %erase_piece(W,Hex_select,Size_hex, colour(@default, 52000, 40000, 8000)),
-
-   
-    pixel_to_axial(Hex_end, [R, Q], Size_hex,Size_x, Size_y),
-    draw_hexagon_axial(W, [R,Q], Size_hex,Size_x, Size_y, Type, Color, true).
 
 
 

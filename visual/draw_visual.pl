@@ -4,13 +4,19 @@
 
 module(draw_visual,[
         draw_image_hexagon/4, draw_hexagon_axial/8, draw_hexagon_pixel/5, 
-        draw_hexagon_pixel_axial/5, draw_possible_movements/4, draw_initials_pieces/5,
-        draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4
+        draw_hexagon_pixel_axial/5, draw_possible_movements/4, draw_pieces/4,
+        draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4, color_player/2
     ]).
 
 :-consult('../hexagon'), import('../hexagon').
 :-consult('../insects'), import('../insects').
+:-consult('../utils'), import('../utils').
 :-consult('utils_visual'), import('utils_visual').
+
+
+color_player(p1, colour(white)).
+color_player(p2, colour(black)).
+
 
 
 
@@ -157,25 +163,11 @@ draw_possible_movements(W,L_hive,Size_hex,Size_x, Size_y, Color):-
         ,_).
 
 
-draw_initials_pieces(W, Size_hex, Color, [X1, X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
-    draw_hexagon_pixel(W, [X1, Y1], Size_hex, hormiga, Color),
-    draw_hexagon_pixel(W, [X1, Y2], Size_hex, hormiga, Color),
-    draw_hexagon_pixel(W, [X1, Y3], Size_hex, hormiga, Color),
+draw_pieces(W, Player_id,Size_hex, Type, Pieces):-
 
-    draw_hexagon_pixel(W, [X2, Y1], Size_hex, escarabajo, Color),
-    draw_hexagon_pixel(W, [X2, Y2], Size_hex, escarabajo, Color),
+    color_player(Player_id, Col),
+    length(Pieces, Length_pieces),
+    Length_pieces > 0,
+    member(Insect_pos, Pieces),
+    draw_hexagon_pixel(W, Insect_pos, Size_hex, Type, Col).
 
-    draw_hexagon_pixel(W, [X3, Y1], Size_hex, saltamonte, Color),
-    draw_hexagon_pixel(W, [X3, Y2], Size_hex, saltamonte, Color),
-    draw_hexagon_pixel(W, [X3, Y3], Size_hex, saltamonte, Color),
-
-    draw_hexagon_pixel(W, [X4, Y1], Size_hex, abejaReina, Color),
-
-    draw_hexagon_pixel(W, [X5, Y1], Size_hex, aranha, Color),
-    draw_hexagon_pixel(W, [X5, Y2], Size_hex, aranha, Color),
-
-    draw_hexagon_pixel(W, [X6, Y1], Size_hex, mariquita, Color),
-
-    draw_hexagon_pixel(W, [X7, Y1], Size_hex, mosquito, Color),
-
-    draw_hexagon_pixel(W, [X8, Y1], Size_hex, bichoBola, Color).

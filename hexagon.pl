@@ -31,14 +31,6 @@ are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- Dir1 is Dir + 1, Dir1 =< 6, are_neighbo
 
 % esta colmena es de ejemplo. Pero va a hacer asi. Contiene las posiciones de las casillas
 
-hive([[0,0], [1,0], [2,0], [3,0], [0,1], [1,1], [2,1] , [1,2], [0,3]]).
-% este predicado nos dice si una casilla esta en la colmena o no 
-in_Hive(Cas):- hive(L), member(Cas, L),!.
-
-% para saber si dos hexagonos son adyacentes en la colmena
-adj(H1,H2):-
-    in_Hive(H1), in_Hive(H2),
-    are_neighbors(H1,H2).
 
 % para saber si el nodo q se quiere agregar esta conectado a la colmena
 is_connected_hex_to_hive(Hex, Hive):-
@@ -46,7 +38,7 @@ is_connected_hex_to_hive(Hex, Hive):-
     not(Hex_memb == Hex),
     dfs(Hex, Hex_memb, Hive, []),!.
 
-add_to_hive(Hex):- not(in_Hive(Hex)), hive(L), is_connected_hex_to_hive(Hex, L).
+
 
 % devuelve true si hay camino entre dos casillas de la colmena
 dfs(Hex1, Hex2, Hive, Visited):- Hex1 == Hex2, writeln("esta conectado"),!.
