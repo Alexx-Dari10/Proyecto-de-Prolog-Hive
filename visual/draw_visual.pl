@@ -17,12 +17,30 @@ module(draw_visual,[
 color_player(p1, colour(white)).
 color_player(p2, colour(black)).
 
+%names resources
+resource_name(abejaReina, p1, abejaReinaBlanca):- !.
+resource_name(hormiga, p1, hormigaBlanca).
+resource_name(aranha, p1, aranhaBlanca).
+resource_name(saltamonte, p1, saltamonteBlanca).
+resource_name(escarabajo, p1, escarabajoBlanca).
+resource_name(mosquito, p1, mosquitoBlanca).
+resource_name(mariquita, p1, mariquitaBlanca).
+resource_name(bichoBola, p1, bichoBolaBlanca).
+
+resource_name(abejaReina, p2, abejaReinaNegra).
+resource_name(hormiga, p2, hormigaNegra).
+resource_name(aranha, p2, aranhaNegra).
+resource_name(saltamonte, p2, saltamonteNegra).
+resource_name(escarabajo, p2, escarabajoNegra).
+resource_name(mosquito, p2, mosquitoNegra).
+resource_name(mariquita, p2, mariquitaNegra).
+resource_name(bichoBola, p2, bichoBolaNegra).
 
 
 
 draw_image_hexagon(Window,Image,[Point_x, Point_y]):-
-    X_center is Point_x - 23,
-    Y_center is Point_y -23,
+    X_center is Point_x - 24,
+    Y_center is Point_y -24,
     new_image(Window,_, Image, point(X_center, Y_center)).
 
 
@@ -169,5 +187,9 @@ draw_pieces(W, Player_id,Size_hex, Type, Pieces):-
     length(Pieces, Length_pieces),
     Length_pieces > 0,
     member(Insect_pos, Pieces),
-    draw_hexagon_pixel(W, Insect_pos, Size_hex, Type, Col).
+    
+    resource_name(Type, Player_id, Name),
+    
+   
+    draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col).
 

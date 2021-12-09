@@ -29,7 +29,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         member(Hex_fin, Moves),
        
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
-        Msg = "ok"
+        Msg = "ok",!
         
     );
     (
@@ -38,21 +38,21 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
-        Msg = "ok"
+        Msg = "ok",!
     );
     (
         Val == add,
         must_add_queen(Player_id),
         not(Type == abejaReina),
-        Msg = "Debe agregar la abeja reina",
-        writeln("Debe agregar la abeja reina")
+        Msg = "Debe agregar la abeja reina",!
+        
     );
     (
         not(Val == init),
         not(Val == add),
         not(queen_in_game(Player_id)),
-        Msg = "No puede moverse ninguna ficha hasta que la reina este en juego",
-        writeln("No puede moverse ninguna ficha hasta que la reina este en juego")
+        Msg = "No puede moverse ninguna ficha hasta que la reina este en juego",!
+        
     );
     (
         not(Val == init),
@@ -67,7 +67,7 @@ Chequear si es mosquito o escarabajo ponerle 1 nivel mas
  */
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
-        Msg = "ok"
+        Msg = "ok",!
     ).
         
     
@@ -101,9 +101,8 @@ change_player_turn(Type, Player_id, Hex, Level, Hex_fin, L_hive):-
         player(Id, Moves_other, false, Init_other),
         not(player_can_play(Id, L_hive)),
 
-        % agrega al jugador que hizo la jugada con un movimiento mas
-        Moves_new is Moves + 1,
-        assert(player(Player_id, Moves_new, true, false))
+        
+        assert(player(Player_id, Moves, Current, Init))
     ).
 
 queen_in_game(Player_id):-
@@ -129,7 +128,7 @@ player_can_play(Player_id, L_hive):-
        
         member([Type, Id, Player_id_memb ,Hex,Level], Insects_hand),
         possible_moves(init, Type, Id, Player_id_memb , Hex, Level, Moves, L_hive),
-        writeln(Moves),
+    
         length(Moves, Length),
 
         hexagon:bigger(Length, 0),
@@ -346,7 +345,7 @@ add_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 
 % este predicado es para revisar q ninguna ficha alrededor es del adversario
 valid_hex(Player_id, Hex_neighbor, L_hive):-
-    writeln("Checking"),
+   
     findall(Neighbor, 
             (
                 are_neighbors(Hex_neighbor, Neighbor), % para ir por cada vecino
@@ -354,7 +353,7 @@ valid_hex(Player_id, Hex_neighbor, L_hive):-
                 is_same_color_or_empty(Player_id, Neighbor, L_hive)
             ), 
             List_neighbor),
-    writeln(List_neighbor),
+    
     length(List_neighbor, 6). % si todas las casillas alrededor son del mismo color o estan vacias
     
     

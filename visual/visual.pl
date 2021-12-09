@@ -8,35 +8,57 @@
 
 :-consult('draw_visual'), import('draw_visual').
 
-:-dynamic size_hex/1, size_y/1, size_x/1, bool_selected/1, piece_selected/5,pieces/4, init_player/2, move_state/1.
+:-dynamic size_hex/1, size_y/1, size_x/1, bool_selected/1, piece_selected/5,pieces/4, 
+        init_player/2, move_state/1, current_player/1, arrowLeft/3.
+
+
+change_player(p1,p2).
+change_player(p2,p1).
 
 % move_state/1 es para llevar el estado de la ficha seleccionada: init, add, move
 
 % pieces(Player_id, Type, Initial_pieces, In_hive_pieces)
 
-resource(cero, image,image('0.jpg')).
-resource(uno, image,image('1.jpg')).
-resource(dos, image,image('2.jpg')).
-resource(abejaReina, image,image('abejaReina.jpg')).
-resource(hormiga, image,image('hormiga.jpg')).
-resource(aranha, image,image('aranha.jpg')).
-resource(saltamonte, image,image('saltamonte.jpg')).
-resource(escarabajo, image,image('escarabajo.jpg')).
-resource(mosquito, image,image('mosquito.jpg')).
-resource(mariquita, image,image('mariquita.jpg')).
-resource(bichoBola, image,image('bichoBola.jpg')).
+%fichas blancas
+resource(abejaReinaBlanca, image,image('abejaReinaBlanca.jpg')).
+resource(hormigaBlanca, image,image('hormigaBlanca.jpg')).
+resource(aranhaBlanca, image,image('aranhaBlanca.jpg')).
+resource(saltamonteBlanca, image,image('saltamonteBlanca.jpg')).
+resource(escarabajoBlanca, image,image('escarabajoBlanca.jpg')).
+resource(mosquitoBlanca, image,image('mosquitoBlanca.jpg')).
+resource(mariquitaBlanca, image,image('mariquitaBlanca.jpg')).
+resource(bichoBolaBlanca, image,image('bichoBolaBlanca.jpg')).
+
+%fichas negras
+resource(abejaReinaNegra, image,image('abejaReinaNegra.jpg')).
+resource(hormigaNegra, image,image('hormigaNegra.jpg')).
+resource(aranhaNegra, image,image('aranhaNegra.jpg')).
+resource(saltamonteNegra, image,image('saltamonteNegra.jpg')).
+resource(escarabajoNegra, image,image('escarabajoNegra.jpg')).
+resource(mosquitoNegra, image,image('mosquitoNegra.jpg')).
+resource(mariquitaNegra, image,image('mariquitaNegra.jpg')).
+resource(bichoBolaNegra, image,image('bichoBolaNegra.jpg')).
+
+resource(arrow_blanca, image,image('blanca.jpg')).
+resource(arrow_negra, image,image('negra.jpg')).
+
+arrow_left(p1, [700,40], arrow_blanca).
+arrow_left(p2, [700,700],arrow_negra).
+
 
 main:-
     insects:start_game(),
 
     assert(bool_selected(false)),
     assert(piece_selected(_,_,_,_,_)),
-    assert(size_hex(35)),
+    assert(size_hex(40)),
     assert(size_x(800)),
     assert(size_y(800)),
 
     assert(init_player(p1,true)),
     assert(init_player(p2,true)),
+    assert(current_player(p1)),
+    
 
     assert(move_state(init)),
     
@@ -48,7 +70,7 @@ main:-
     assert(pieces(p1, abejaReina ,[[280,40]                     ], [])),
     assert(pieces(p1, aranha     ,[[360,40], [360,70]           ], [])),
     assert(pieces(p1, mariquita  ,[[440,40]                     ], [])),
-    assert(pieces(p1, mosquito   ,[[520,40]                     ], [])),
+    assert(pieces(p1, mosquito  ,[[520,40]                     ], [])),
     assert(pieces(p1, bichoBola  ,[[600,40]                     ], [])),
 
     assert(pieces(p2, hormiga    ,[[40,700 ], [40,730 ],[40, 760]], [])),
@@ -61,6 +83,7 @@ main:-
     assert(pieces(p2, bichoBola  ,[[600,700]                     ], [])),
 
 
+    
     size_hex(Size_hex),
     size_x(Size_x),
     size_y(Size_y),
@@ -68,6 +91,8 @@ main:-
     new(W, window("window", size(Size_x, Size_y))),
     send(W, background, colour(@default, 52000, 40000, 8000)),
     
+    
+
     event_click(W),
 
     insects:start_insects(p1, [40,120,200,280,360,440,520,600], [40,70,100]),
@@ -80,6 +105,8 @@ main:-
 
 draw_game(W, Size_hex):-
     clear_game(W), 
+
+
     %pinta las piezas del jugador 1
     findall(_, 
             (
@@ -111,9 +138,13 @@ draw_game(W, Size_hex):-
                     draw_pieces(W, p2,Size_hex,Type, Initials2)
                 )
             )
-        ), _).
+        ), _),
 
-
+    
+    current_player(Current),
+    arrow_left(Current,Hex_arrow, Arrow_name),
+    
+    draw_image_hexagon(W,Arrow_name,Hex_arrow).
 
 clear_game(W):- send(W, clear).
 
@@ -130,12 +161,15 @@ event_click(W):-
 check_init_add(W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
     (
         %init
-        init_player(Player_id, true),
-        writeln("Init"),
-        
         bool_selected(false),
+        current_player(Player_id),
 
-        Size_hex is 35,
+        init_player(Player_id, true),
+        writeln("init"),
+        writeln(Player_id),
+        
+        
+        Size_hex is 40,
         Size_x is 800, 
         Size_y is 800,
         get(Position, x, Click_X),
@@ -159,6 +193,7 @@ check_init_add(W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
 
 
         !, % este corte es para q no entre a las otras partes
+        retract(move_state(_)), % ya se movio la ficha o no se pudo mover
         assert(move_state(init)),
 
         retract(bool_selected(false)),
@@ -169,13 +204,15 @@ check_init_add(W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
     );
     (
         %add
-        init_player(Player_id, false),
-        
         bool_selected(false),
+        current_player(Player_id),
+
+        init_player(Player_id, false),
+
         writeln("addddddd"),
 
 
-        Size_hex is 35,
+        Size_hex is 40,
         Size_x is 800, 
         Size_y is 800,
         get(Position, x, Click_X),
@@ -197,9 +234,10 @@ check_init_add(W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
 
         !, % este corte es para q no entre a las otras partes
 
+        retract(move_state(_)), % ya se movio la ficha o no se pudo mover
         assert(move_state(add)),
 
-        retract(bool_selected(false)),
+        retract(bool_selected(_)),
         assert(bool_selected(true)),
 
         retract(piece_selected(_,_,_,_,_)),
@@ -210,14 +248,18 @@ check_init_add(W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
 
 select_piece(W, Position):-
         (
-            check_init_add(W,Position, p1, [40,120,200,280,360,440,520,600], [40,70,100])
+            check_init_add(W,Position, p1, [40,120,200,280,360,440,520,600], [40,70,100]),!
         );
         (
-            check_init_add(W,Position, p2, [40,120,200,280,360,440,520,600], [700,730,760])
+            check_init_add(W,Position, p2, [40,120,200,280,360,440,520,600], [700,730,760]),!
         );
         (
             bool_selected(false),
-            Size_hex is 35,
+
+            not(check_init_add(W,Position, p1, [40,120,200,280,360,440,520,600], [40,70,100])),
+            not(check_init_add(W,Position, p2, [40,120,200,280,360,440,520,600], [700,730,760])),
+
+            Size_hex is 40,
             Size_x is 800, 
             Size_y is 800,
             get(Position, x, Click_X),
@@ -225,13 +267,15 @@ select_piece(W, Position):-
             
             check_position_in_hive([Click_X,Click_Y], Size_hex, [40,600], [100,700]),
             
-            %arreglar esto aqui pa q me de bien los vlaores de piece-selected
-            draw_hexagon_pixel_axial(W, [Click_X, Click_Y], Size_hex,Size_x, Size_y, aranha, colour(white)),
+            
+            %arreglar esto aqui pa q me de bien los valores de piece-selected
+            draw_hexagon_pixel_axial(W, [Click_X, Click_Y], Size_hex,Size_x, Size_y, aranhaBlanca, colour(white)),
             
 
 
             !, % este corte es para q no entre a las otras partes
-            assert(move_state(move)),
+            retract(move_state(_)), % ya se movio la ficha o no se pudo mover
+            assert(move_state(move)), % aqui en move debe ir la ficha q es
 
             retract(bool_selected(false)),
             assert(bool_selected(true)),
@@ -239,34 +283,40 @@ select_piece(W, Position):-
             retract(piece_selected(_,_,_,_,_)),
             assert(piece_selected(Type,Id,p1,Hex_select,Level))
         );
-
         (
+            
             % mover la ficha seleccionada
-            move_state(Type),
+            
+            move_state(Type_state),
+            write(Type_state),
+            
             (
                 (
-                    Type == init,
-                    make_move_state(W, Position,init)
+                    Type_state == init,
+                    make_move_state(W, Position,init),!
                 );
                 (
-                    Type == add,
-                    make_move_state(W, Position,add)
+                    Type_state == add,
+                    make_move_state(W, Position,add),!
                 );
                 (
-                    not(Type == init), not(Type == add),
-                    make_move_state(W, Position,Type)
+                    not(Type_state == init), not(Type_state == add),
+
+                    make_move_state(W, Position,Type_state),!
                 )
             )
+         
         ).
+
    
-make_move_state_init(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
+make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
                         Level, [X_axial,Y_axial]):-
     writeln("4to"),
     bool_selected(true),
     write("Esto es "), writeln(Type_move),
     move_state(Type_move),
 
-    Size_hex is 35,
+    Size_hex is 40,
     Size_x is 800, 
     Size_y is 800,
     
@@ -282,63 +332,72 @@ make_move_state_init(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, 
     hive(L_hive).
 
 
-make_move_state_end(W,Size_hex,Size_x,Size_y,Type, Id, Player_id, Hex_axial):-
-    color_player(Player_id,Col),
     
-
-    axial_to_pixel(Hex_axial, [X_pixel,Y_pixel], Size_hex, Size_x, Size_y),
-    
-    
-    move_piece(W, [X_pixel,Y_pixel], Type, Col), 
-    
-    unclick(W, Size_hex, Player_id).
     
 
 unclick(W, Size_hex, Player_id):-
+    
     draw_game(W, Size_hex),
 
-    retract(move_state(_)), % ya se movio la ficha
     retract(init_player(Player_id, _)),
     assert(init_player(Player_id, false)),
 
-    retract(bool_selected(true)),
+    retract(bool_selected(_)),
     assert(bool_selected(false)),
 
     retract(piece_selected(_,_,_,_,_)),
     assert(piece_selected(_,_,_,_,_)).
-
+    
+    
 
 
 make_move_state(W, Position, Type_move):-
     (
-        make_move_state_init(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
+        make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
                             -1,[X_axial,Y_axial]),
 
         
         move_insect(Type_move, Type, Id, Player_id, Hex_ini, -1, [X_axial,Y_axial],L_hive, Msg),
+        Msg == "ok",
         
-        make_move_state_end(W,Size_hex,Size_x,Size_y,Type, Id, Player_id, [X_axial,Y_axial]),
+        color_player(Player_id,Col),
+    
+
+        axial_to_pixel([X_axial,Y_axial], [X_pixel,Y_pixel], Size_hex, Size_x, Size_y),
+    
+    
+        move_piece(W, [X_pixel,Y_pixel], Type, Col), 
+        
+       
+        change_player_turn(Type, Player_id, Hex_ini, Level, Hex_fin, L_hive), % ver cuando esto no se cumple
         
         
-        change_player_turn(Type, Player_id, Hex_ini, Level, Hex_fin, L_hive)
+        change_player(Player_id, Other_player),
+        retract(current_player(_)),
+        assert(current_player(Other_player)),
+       
+
+        unclick(W, Size_hex, Player_id), !
     );
 
     (
-        make_move_state_init(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
+        make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             -1,[X_axial,Y_axial]),
 
 
         not(move_insect(Type_move, Type, Id, Player_id, Hex_ini, -1, [X_axial,Y_axial],L_hive, Msg)),
 
-        unclick(W, Size_hex, Player_id)
+        writeln("invalid move"),
+        unclick(W, Size_hex, Player_id),!
     );
     (
-        make_move_state_init(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
+        make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             -1,[X_axial,Y_axial]),
         move_insect(Type_move, Type, Id, Player_id, Hex_ini, -1, [X_axial,Y_axial],L_hive, Msg),
         not(Msg == "ok"),
+        
         writeln(Msg),
-        unclick(W, Size_hex, Player_id)
+        unclick(W, Size_hex, Player_id),!
     ).
                 
 
