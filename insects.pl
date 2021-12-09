@@ -28,7 +28,8 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         
         member(Hex_fin, Moves),
        
-        move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin)
+        move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
+        Msg = "ok"
         
     );
     (
@@ -36,8 +37,8 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         not(must_add_queen(Player_id)),
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
-        move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin)
-        
+        move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
+        Msg = "ok"
     );
     (
         Val == add,
@@ -65,7 +66,8 @@ Chequear si es mosquito o escarabajo ponerle 1 nivel mas
         %NOTA: ver los niveles como las posiciones de una pila (el q esta en el nivel 0 esta en el tope de la pila) 
  */
         member(Hex_fin, Moves),
-        move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin)
+        move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
+        Msg = "ok"
     ).
         
     
