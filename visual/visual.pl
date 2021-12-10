@@ -50,6 +50,8 @@ arrow_left(p2, [700,700],arrow_negra).
 main:-
     insects:start_game(),
 
+    
+    
     assert(bool_selected(false)),
     assert(piece_selected(_,_,_,_,_)),
     
@@ -90,20 +92,23 @@ main:-
     
 
     event_click(W),
-
+    new(Lbl2, label),
     insects:start_insects(p1, [40,120,200,280,360,440,520,600], [40,70,100]),
     insects:start_insects(p2, [40,120,200,280,360,440,520,600], [700,730,760]),
          
-    draw_game(W, Size_hex),
+    draw_game(W),
 
+   
     send(W, open).
 
 
-draw_game(W, Size_hex):-
+
+
+draw_game(W):-
     clear_game(W), 
 
     
-    dimensions(_,Size_x,Size_y),
+    dimensions(Size_hex,Size_x,Size_y),
 
     
     %pinta las piezas del jugador 1
@@ -145,6 +150,8 @@ draw_game(W, Size_hex):-
     
     draw_image_hexagon(W,Arrow_name,Hex_arrow).
 
+
+
 clear_game(W):- send(W, clear).
 
 
@@ -161,8 +168,7 @@ check_move_init_add(Type_move,W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [
     (
         bool_selected(false),
         current_player(Player_id),
-
-       
+        
         dimensions(Size_hex,Size_x,Size_y),
 
 
@@ -178,10 +184,13 @@ check_move_init_add(Type_move,W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [
         
         
         hive(L_hive),
+        write_ln(Type_move),
 
         possible_moves(Type_move, Type, Id, Player_id , Hex_select, -1, Moves, L_hive),
 
+       
         length(Moves, Length_moves),
+        write_ln(Length_moves),
         Length_moves > 0,
         
         draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),
@@ -219,7 +228,7 @@ select_move(W, Position, Current_Player_id):-
     get(Position, x, Click_X),
     get(Position, y, Click_Y),
     
-    check_position_in_hive([Click_X,Click_Y], Size_hex, [40,600], [150,650]),
+    check_position_in_hive([Click_X,Click_Y], Size_hex, [40,600], [100,700]),
     
 
     
@@ -302,35 +311,37 @@ click(W, Position):-
 
    
 make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
-                        Level, [X_axial,Y_axial]):-
-    writeln("4to"),
-    bool_selected(true),
-    write("Esto es "), writeln(Type_move),
-    move_state(Type_move),
+                 Level, [X_axial,Y_axial]):-
+    
+        writeln("4to"),
+        bool_selected(true),
+        write("Esto es "), writeln(Type_move),
+        move_state(Type_move),
+        
+        
+        dimensions(Size_hex,Size_x,Size_y), %duda aqui si volver a ponerlo
+        
 
-    dimensions(Size_hex,Size_x,Size_y), %duda aqui si volver a ponerlo
+        get(Position, x, Click_X),
+        get(Position, y, Click_Y),
+
+        pixel_to_axial([Click_X,Click_Y], [X_axial,Y_axial], Size_hex,Size_x, Size_y),
+        
+        piece_selected(Type, Id, Player_id, Hex_ini, Level), % selected in hand
+        
+        
+        hive(L_hive).
+
+    
     
 
-    get(Position, x, Click_X),
-    get(Position, y, Click_Y),
+unclick(W, Player_id, Msg):-
+    
+    draw_game(W),
 
-    pixel_to_axial([Click_X,Click_Y], [X_axial,Y_axial], Size_hex,Size_x, Size_y),
-    
-    piece_selected(Type, Id, Player_id, Hex_ini, Level), % selected in hand
-    
-    
-    hive(L_hive).
-
+    write_message(W,Msg),
 
     
-    
-
-unclick(W, Size_hex, Player_id):-
-    
-    draw_game(W, Size_hex),
-
-    retract(init_player(Player_id, _)),
-    assert(init_player(Player_id, false)),
 
     retract(bool_selected(_)),
     assert(bool_selected(false)),
@@ -343,12 +354,13 @@ unclick(W, Size_hex, Player_id):-
 
 make_move_state(W, Position, Type_move):-
     (
+        write_ln("primero"),
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
                             Level,[X_axial,Y_axial]),
 
         
         move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg),
-        Msg == "ok",
+        Msg == "",
         
         color_player(Player_id,Col),
         
@@ -359,7 +371,8 @@ make_move_state(W, Position, Type_move):-
     
         move_piece(W, [X_axial,Y_axial], Type, Col), 
         
-        
+        retract(init_player(Player_id, _)),
+        assert(init_player(Player_id, false)),
 
         change_player_turn(Type, Player_id, Hex_ini, Level, Hex_fin, L_hive), % ver cuando esto no se cumple
         
@@ -369,29 +382,34 @@ make_move_state(W, Position, Type_move):-
         assert(current_player(Other_player)),
        
 
-        unclick(W, Size_hex, Player_id),
-       
+        unclick(W, Player_id,Msg),
         !
-    ),!;
+    ),!;       
 
     (
+        
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             Level,[X_axial,Y_axial]),
 
         
         not(move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg)),
 
-        writeln("invalid move"),
-        unclick(W, Size_hex, Player_id),!
+        
+        writeln("Invalid move"),
+
+        unclick(W, Player_id, "Invalid move")
+        
+        
     ),!;
     (
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             Level,[X_axial,Y_axial]),
         move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg),
-        not(Msg == "ok"),
+        not(Msg == ""),
         
         writeln(Msg),
-        unclick(W, Size_hex, Player_id),!
+        
+        unclick(W, Player_id, Msg),!
     ).
                 
 

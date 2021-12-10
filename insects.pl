@@ -26,10 +26,11 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         
+        
         member(Hex_fin, Moves),
-       
+        writeln("casa1"),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
-        Msg = "ok",!
+        Msg = "",!
         
     );
     (
@@ -40,13 +41,13 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         write("Type: "), writeln([Type, Id, Player_id, Hex, 0, Hex_fin]),
         
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
-        Msg = "ok",!
+        Msg = "",!
     );
     (
         Val == add,
         must_add_queen(Player_id),
         not(Type == abejaReina),
-        Msg = "Debe agregar la abeja reina",!
+        Msg = "Must add queen. 4 movement",!
         
     );
     (
@@ -56,17 +57,16 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
-        Msg = "ok",!
+        Msg = "",!
         
     );
     (
         not(Val == init),
         not(Val == add),
-        write("Player_id "), writeln(Player_id),
         
         
         not(queen_in_game(Player_id)),
-        Msg = "No puede moverse ninguna ficha hasta que la reina este en juego",!
+        Msg = "Add queen to move any piece",!
         
     );
     (
@@ -81,11 +81,11 @@ Chequear si es mosquito o escarabajo ponerle 1 nivel mas
         %quito la ficha con el nivel que tenga y la pongo en un nivel mas
         %NOTA: ver los niveles como las posiciones de una pila (el q esta en el nivel 0 esta en el tope de la pila) 
  */     
-        writeln("Moves"),writeln(Hex) , writeln(Moves),
+        
         member(Hex_fin, Moves),
-        writeln([Type, Id, Player_id, Hex, Level, Hex_fin]),
+        
         move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
-        Msg = "ok",
+        Msg = "",
         writeln(Msg),!
     ).
 
