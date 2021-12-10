@@ -4,7 +4,7 @@
 
 module(draw_visual,[
         draw_image_hexagon/4, draw_hexagon_axial/8, draw_hexagon_pixel/5, 
-        draw_hexagon_pixel_axial/5, draw_possible_movements/4, draw_pieces/4,
+        draw_hexagon_pixel_axial/5, draw_possible_movements/4, draw_pieces/8,
         draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4, color_player/2
     ]).
 
@@ -181,15 +181,35 @@ draw_possible_movements(W,L_hive,Size_hex,Size_x, Size_y, Color):-
         ,_).
 
 
-draw_pieces(W, Player_id,Size_hex, Type, Pieces):-
+draw_pieces(W, Player_id, Size_hex, Size_x, Size_y, Type, Pieces, In_hive_bool):-
 
-    color_player(Player_id, Col),
-    length(Pieces, Length_pieces),
-    Length_pieces > 0,
-    member(Insect_pos, Pieces),
+    (
+        %fichas iniciales
+        not(In_hive_bool),
+        color_player(Player_id, Col),
+        length(Pieces, Length_pieces),
+        Length_pieces > 0,
+        member(Insect_pos, Pieces),
+
+        resource_name(Type, Player_id, Name),
+        
     
-    resource_name(Type, Player_id, Name),
+        draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col)
+    );
+    (
+        
+        %fichas de la colmena (las guardamos en axial para despues poder comparar)
+        In_hive_bool,
+        color_player(Player_id, Col),
+        length(Pieces, Length_pieces),
+        Length_pieces > 0,
+
+        member([Axial_x,Axial_y], Pieces),
+        
+        resource_name(Type, Player_id, Name),
+        
+        axial_to_pixel([Axial_x,Axial_y], Insect_pos, Size_hex, Size_x, Size_y),
     
-   
-    draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col).
+        draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col)
+    ).
 
