@@ -193,10 +193,11 @@ check_move_init_add(Type_move,W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [
         write_ln(Length_moves),
         Length_moves > 0,
         
-        draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),
+        
 
         draw_possible_movements(W, Moves, Size_hex,Size_x,Size_y, colour(blue)),
 
+        draw_hexagon_pixel_empty(W, Hex_select, Size_hex, colour(red)),
 
         !, % este corte es para q no entre a las otras partes
         retract(move_state(_)), % ya se movio la ficha o no se pudo mover
@@ -228,9 +229,9 @@ select_move(W, Position, Current_Player_id):-
     get(Position, x, Click_X),
     get(Position, y, Click_Y),
     
-    check_position_in_hive([Click_X,Click_Y], Size_hex, [40,600], [100,700]),
+    check_position_in_hive([Click_X,Click_Y], Size_hex, [0,Size_x], [100,700]),
     
-
+    writeln("campo"),
     
     %convertimos a pixeles para poder pintar y guardar el punto en el visual en piece selected
     pixel_to_axial([Click_X,Click_Y], [X_axial,Y_axial], Size_hex,Size_x, Size_y),
@@ -250,10 +251,11 @@ select_move(W, Position, Current_Player_id):-
     length(Moves, Length_moves),
     Length_moves > 0,
 
-    draw_hexagon_pixel_empty(W, [Pixel_x,Pixel_y], Size_hex, colour(red)),
+    
 
     draw_possible_movements(W, Moves, Size_hex,Size_x,Size_y, colour(blue)),
 
+    draw_hexagon_pixel_empty(W, [Pixel_x,Pixel_y], Size_hex, colour(red)),
    
     !, % este corte es para q no entre a las otras partes
     retract(move_state(_)), % ya se movio la ficha o no se pudo mover
@@ -281,6 +283,7 @@ click(W, Position):-
         );
         (
             current_player(Current_Player_id),
+            
             select_move(W, Position, Current_Player_id),!
         );
 
@@ -313,8 +316,9 @@ click(W, Position):-
 make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
                  Level, [X_axial,Y_axial]):-
     
-        writeln("4to"),
+        
         bool_selected(true),
+        writeln("4to"),
         write("Esto es "), writeln(Type_move),
         move_state(Type_move),
         

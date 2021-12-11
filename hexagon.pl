@@ -2,9 +2,9 @@
 
 module(hexagon,
     [
-        is_connected_hex_to_hive/2, direction/2, articulation_point/2,hive/1,
-        flat_hex_to_pixel/4, pixel_to_flat_hex/4, axial_to_oddq/2
-
+        is_connected_hex_to_hive/2, direction/2, not_articulation_point/2,hive/1,
+        flat_hex_to_pixel/4, pixel_to_flat_hex/4, axial_to_oddq/2,are_neighbors_dir/3,
+        are_neighbors/2, neighbor_dir/3, connected/2
     ]).
 
 %import
@@ -29,19 +29,28 @@ are_neighbors(Hex1, Hex2):- are_neighbors_dir(Hex1,Hex2,1).
 are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- direction(Dir,[R_dir,Q_dir]), R2 is R1+R_dir, Q2 is Q1+Q_dir.
 are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- Dir1 is Dir + 1, Dir1 =< 6, are_neighbors_dir([R1,Q1],[R2,Q2],Dir1).
 
-% esta colmena es de ejemplo. Pero va a hacer asi. Contiene las posiciones de las casillas
 
+neighbor_dir([R1,Q1],[R2,Q2],Dir):- direction(Dir,[R_dir,Q_dir]), R2 is R1+R_dir, Q2 is Q1+Q_dir.
 
 % para saber si el nodo q se quiere agregar esta conectado a la colmena
 is_connected_hex_to_hive(Hex, Hive):-
-    member(Hex_memb, Hive),
-    not(Hex_memb == Hex),
-    dfs(Hex, Hex_memb, Hive, []),!.
+    (
+        member(Hex_memb, Hive),
+        not(Hex_memb == Hex),
+        dfs(Hex, Hex_memb, Hive, []),!
+    );
+    (
+        member(Hex_memb, Hive),
+        length(Hive, Length),
+        Length == 1,
+        Hex_memb == Hex
+    ).
 
-
+connected(Hex,Hive):- are_neighbors(Hex, Hex1), member(Hex1, Hive),!.
 
 % devuelve true si hay camino entre dos casillas de la colmena
 dfs(Hex1, Hex2, Hive, Visited):- Hex1 == Hex2, writeln("esta conectado"),!.
+
 dfs(Hex1, Hex2, Hive, Visited):-
     append(Visited,[Hex1], Visited_1),
     are_neighbors(Hex1, Adj_hex1),
@@ -54,24 +63,26 @@ all_neighbors(Hex, L_Neighbors):- findall(Neighbor_hex, are_neighbors(Hex,Neighb
 
 
 % saber si es un punto de articulacion
-articulation_point(Hex_old, L_hive):-
+not_articulation_point(Hex_old, L_hive):-
     delete(L_hive, Hex_old, L_hive1),
+
     findall(Hex_neighbor, 
-               (
-                    are_neighbors(Hex_old, Hex_neighbor), 
-                    member(Hex_neighbor, L_hive1),
-                    is_connected_hex_to_hive(Hex_neighbor, L_hive1)
-                );
-                (
-                    are_neighbors(Hex_old, Hex_neighbor), 
-                    not(member(Hex_neighbor, L_hive1))
-                ),
-            L_neighbors),
+            (
+                are_neighbors(Hex_old, Hex_neighbor),
+                member(Hex_neighbor, L_hive1)
+            ), L_neighbors),
     
-    length(L_neighbors, Length),
+    all_connected(L_neighbors, L_hive1).
+   
     
-    Length < 6,
-    writeln("Articulation point").
+all_connected([], Hive).
+all_connected([Neighbor1|R_neighbors], Hive):- connected_with_all([Neighbor1|R_neighbors], Hive),
+                                                all_connected(R_neighbors, Hive).
+
+connected_with_all([Neighbor1|[]],Hive).
+connected_with_all([Neighbor1, Neighbor2|R_neighbors],Hive):-  
+                        dfs(Neighbor1, Neighbor2,Hive,[]), 
+                        connected_with_all([Neighbor1|R_neighbors],Hive).   
     
     
 

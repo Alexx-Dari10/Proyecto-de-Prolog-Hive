@@ -17,6 +17,9 @@ module(draw_visual,[
 color_player(p1, colour(white)).
 color_player(p2, colour(black)).
 
+change_player(p1,p2).
+change_player(p2,p1).
+
 %names resources
 resource_name(abejaReina, p1, abejaReinaBlanca):- !.
 resource_name(hormiga, p1, hormigaBlanca).
@@ -194,7 +197,12 @@ draw_pieces(W, Player_id, Size_hex, Size_x, Size_y, Type, Pieces, In_hive_bool):
         resource_name(Type, Player_id, Name),
         
     
-        draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col)
+        draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col),
+
+
+        change_player(Player_id,Other_player),
+        color_player(Other_player, Col_other),
+        draw_hexagon_pixel_empty(W, Insect_pos, Size_hex, Col_other)
     );
     (
         
@@ -210,6 +218,10 @@ draw_pieces(W, Player_id, Size_hex, Size_x, Size_y, Type, Pieces, In_hive_bool):
         
         axial_to_pixel([Axial_x,Axial_y], Insect_pos, Size_hex, Size_x, Size_y),
     
-        draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col)
+        draw_hexagon_pixel(W, Insect_pos, Size_hex, Name, Col),
+
+        change_player(Player_id,Other_player),
+        color_player(Other_player, Col_other),
+        draw_hexagon_pixel_empty(W, Insect_pos, Size_hex, Col_other)
     ).
 

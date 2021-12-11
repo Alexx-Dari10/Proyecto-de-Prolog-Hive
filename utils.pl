@@ -1,7 +1,7 @@
 %export
 
 :- module(utils, 
-    [bigger/2,remove_repeated/2,switch/2
+    [bigger/2,remove_repeated/2,switch/2, rang/3
     ]).
 
 %utils
@@ -20,3 +20,7 @@ remove_repeated([X|Y], Z, L1):-  remove_repeated(Y,Z,L1).
 switch(Val, [T:Goal|Cases]) :-
     (Val=T -> call(Goal));
     (switch(Val, Cases)).
+
+
+rang(X,Y,X):- X =< Y.
+rang(X,Y,Z):- X < Y, X2 is X+1, rang(X2,Y,Z). 
