@@ -679,8 +679,8 @@ mariquita_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         hexagon:not_articulation_point(Hex,L_hive),
         delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
         findall(Move, (mariquita_move(Hex,L_hive1,[],0,Move)), Moves1),
-        delete(Moves1, none, Moves2),
-        utils:remove_repeated(Moves2,Moves)
+        delete(Moves1, none, Moves)
+        
     );
     (
         insect_blocked(Type, Id, Player_id , Hex, Level),
@@ -692,11 +692,6 @@ mariquita_move(Hex1, L_hive1, Visited, Level_rec, Move):-
         Level_rec == 3, 
         not(member(Hex1, L_hive1)), 
         Move = Hex1
-    );
-    (
-        Level_rec > 3, 
-        not(member(Hex1, L_hive1)), 
-        Move = none
     );
     (
         append(Visited,[Hex1], Visited_1),
