@@ -4,7 +4,7 @@
 module(utils_visual, [
     pixel_to_axial/3, axial_to_pixel/5, get_X_Y_to_Pixel_to_flat_hex_and_Flat_hex_to_pixel/5,
     flat_hex_corner/4, new_image/4, check_positions_in_hand/5, check_position_in_hive/4,
-    write_message/2
+    write_message/3
 ]).
 
 
@@ -94,7 +94,7 @@ check_position_in_hive([Click_X, Click_Y],Size_hex, [X_ini, X_end], [Y_ini,Y_end
     Click_Y < Y_end - Size_hex.
 
 
-write_message(W, Msg):-
+write_message(W, Msg, [Size_x_static, Size_y_static]):-
     new(Lbl1, label(message, '')),
     
 	send(Lbl1, font,  @times_bold_24),
@@ -102,4 +102,7 @@ write_message(W, Msg):-
 	
 	send(Lbl1, selection, S1),
 	
-	send(W, display,  Lbl1, point(600,770)).
+    X1_static is Size_x_static-400,
+    Y1_static is Size_y_static-30,
+
+	send(W, display,  Lbl1, point(X1_static,Y1_static)).

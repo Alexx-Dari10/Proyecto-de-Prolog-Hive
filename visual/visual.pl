@@ -9,13 +9,15 @@
 :-consult('draw_visual'), import('draw_visual').
 
 :-dynamic bool_selected/1, piece_selected/5,pieces/4, 
-        init_player/2, move_state/1, current_player/1, arrowLeft/3.
+        init_player/2, move_state/1, current_player/1, arrowLeft/3, dimensions/3, dimensions_hive/4,
+        dimensions_static/3, arrow_left/3.
 
 
 change_player(p1,p2).
 change_player(p2,p1).
 
-dimensions(40,1000,800).
+
+
 % move_state/1 es para llevar el estado de la ficha seleccionada: init, add, move
 
 % pieces(Player_id, Type, Initial_pieces, In_hive_pieces)
@@ -43,15 +45,20 @@ resource(bichoBolaNegra, image,image('bichoBolaNegra.jpg')).
 resource(arrow_blanca, image,image('blanca.jpg')).
 resource(arrow_negra, image,image('negra.jpg')).
 
-arrow_left(p1, [700,40], arrow_blanca).
-arrow_left(p2, [700,700],arrow_negra).
+
 
 
 main:-
     insects:start_game(),
 
+    assert(dimensions(40,1000,800)),
+
+    dimensions(Size_hex, Size_x, Size_y),
     
-    
+    assert(dimensions_static(Size_hex, Size_x, Size_y)),
+
+    dimensions_static(Size_hex_static, Size_x_static, Size_y_static),
+
     assert(bool_selected(false)),
     assert(piece_selected(_,_,_,_,_)),
     
@@ -63,7 +70,12 @@ main:-
 
     assert(move_state(init)),
     
+    Static_Y1 is Size_y_static - 100,
+    Static_Y2 is Size_y_static - 70,
+    Static_Y3 is Size_y_static - 40,
 
+    assert(arrow_left(p1, [700,40], arrow_blanca)),
+    assert(arrow_left(p2, [700,Static_Y1],arrow_negra)),
     %Variables
     assert(pieces(p1, hormiga    ,[[40,40],  [40,70],  [40, 100]], [])),
     assert(pieces(p1, escarabajo ,[[120,40], [120,70]           ], [])),
@@ -74,17 +86,19 @@ main:-
     assert(pieces(p1, mosquito  ,[[520,40]                     ], [])),
     assert(pieces(p1, bichoBola  ,[[600,40]                     ], [])),
 
-    assert(pieces(p2, hormiga    ,[[40,700 ], [40,730 ],[40, 760]], [])),
-    assert(pieces(p2, escarabajo ,[[120,700], [120,730]          ], [])),
-    assert(pieces(p2, saltamonte ,[[200,700], [200,730],[200,760]], [])),
-    assert(pieces(p2, abejaReina ,[[280,700]                     ], [])),
-    assert(pieces(p2, aranha     ,[[360,700], [360,730]          ], [])),
-    assert(pieces(p2, mariquita  ,[[440,700]                     ], [])),
-    assert(pieces(p2, mosquito   ,[[520,700]                     ], [])),
-    assert(pieces(p2, bichoBola  ,[[600,700]                     ], [])),
+    assert(pieces(p2, hormiga    ,[[40,Static_Y1 ], [40,Static_Y2 ],[40, Static_Y3]], [])),
+    assert(pieces(p2, escarabajo ,[[120,Static_Y1], [120,Static_Y2]          ], [])),
+    assert(pieces(p2, saltamonte ,[[200,Static_Y1], [200,Static_Y2],[200,Static_Y3]], [])),
+    assert(pieces(p2, abejaReina ,[[280,Static_Y1]                     ], [])),
+    assert(pieces(p2, aranha     ,[[360,Static_Y1], [360,Static_Y2]          ], [])),
+    assert(pieces(p2, mariquita  ,[[440,Static_Y1]                     ], [])),
+    assert(pieces(p2, mosquito   ,[[520,Static_Y1]                     ], [])),
+    assert(pieces(p2, bichoBola  ,[[600,Static_Y1]                     ], [])),
 
 
-    dimensions(Size_hex,Size_x,Size_y),
+   
+
+    assert(dimensions_hive(0, Size_x, 100, Static_Y1)),
 
     new(W, window("window", size(Size_x, Size_y))),
     send(W, background, colour(@default, 52000, 40000, 8000)),
@@ -94,10 +108,9 @@ main:-
     event_click(W),
     new(Lbl2, label),
     insects:start_insects(p1, [40,120,200,280,360,440,520,600], [40,70,100]),
-    insects:start_insects(p2, [40,120,200,280,360,440,520,600], [700,730,760]),
+    insects:start_insects(p2, [40,120,200,280,360,440,520,600], [Static_Y1,Static_Y2,Static_Y3]),
          
     draw_game(W),
-
    
     send(W, open).
 
@@ -110,6 +123,7 @@ draw_game(W):-
     
     dimensions(Size_hex,Size_x,Size_y),
 
+    dimensions_static(Size_hex_static, Size_x_static, Size_y_static),
     
     %pinta las piezas del jugador 1
     findall(_, 
@@ -117,12 +131,12 @@ draw_game(W):-
                 pieces(p1, Type, Initials, In_hive),
                 (
                     (
-                        draw_pieces(W, p1,Size_hex,Size_x, Size_y, Type, Initials, false),
+                        draw_pieces(W, p1,Size_hex,Size_x_static, Size_y_static, Type, Initials, false),
                         draw_pieces(W, p1,Size_hex,Size_x, Size_y,Type, In_hive, true)
                     ); 
                     (
                         draw_pieces(W, p1,Size_hex,Size_x, Size_y,Type, In_hive, true),
-                        draw_pieces(W, p1,Size_hex,Size_x, Size_y, Type, Initials, false)
+                        draw_pieces(W, p1,Size_hex,Size_x_static, Size_y_static, Type, Initials, false)
                     )
                 )
             ), _),
@@ -134,12 +148,12 @@ draw_game(W):-
             pieces(p2, Type, Initials2, In_hive2),
             (
                 (
-                    draw_pieces(W, p2,Size_hex,Size_x, Size_y, Type, Initials2, false),
+                    draw_pieces(W, p2,Size_hex,Size_x_static, Size_y_static, Type, Initials2, false),
                     draw_pieces(W, p2,Size_hex,Size_x, Size_y,Type, In_hive2, true)
                 ); 
                 (
                     draw_pieces(W, p2,Size_hex,Size_x, Size_y,Type, In_hive2, true),
-                    draw_pieces(W, p2,Size_hex,Size_x, Size_y, Type, Initials2, false)
+                    draw_pieces(W, p2,Size_hex,Size_x_static, Size_y_static, Type, Initials2, false)
                 )
             )
         ), _),
@@ -148,11 +162,46 @@ draw_game(W):-
     current_player(Current),
     arrow_left(Current,Hex_arrow, Arrow_name),
     
-    draw_image_hexagon(W,Arrow_name,Hex_arrow).
+    draw_image_hexagon(W, Arrow_name,Hex_arrow),
+    
+    dimensions_hive(Dim_hiveX1, Dim_hiveX2, Dim_hiveY1, Dim_hiveY2),
+
+    draw_visual:draw_line(W, [Dim_hiveX1,Dim_hiveX2,Dim_hiveY1 + Size_hex], white),
+
+    draw_visual:draw_line(W, [Dim_hiveX1,Dim_hiveX2,Dim_hiveY2 - Size_hex], black),
+    
+    draw_buttons(W).
 
 
 
-clear_game(W):- send(W, clear).
+clear_game(W):- 
+    send(W, clear).
+
+
+clear_buttons(W):-
+    send(@buttonup, free),
+    send(@buttondown, free ),
+    send(@buttonleft, free),
+    send(@buttonright, free).
+
+
+
+
+draw_buttons(W):-
+
+    new(@buttonup, button("up", message(@prolog, move_dir,W,1))),
+    new(@buttondown, button("down", message(@prolog, move_dir,W,2))),
+    new(@buttonleft, button("left", message(@prolog, move_dir,W,3))),
+    new(@buttonright, button("right", message(@prolog, move_dir,W,4))),
+
+    dimensions_static(Size_hex, Size_x, Size_y),
+
+    send(W,display, @buttonup, point(Size_x-100,Size_y - 50)),
+    send(W,display, @buttondown, point(Size_x-100,Size_y - 30)),
+    send(W,display, @buttonleft, point(Size_x-150,Size_y - 40)),
+    send(W,display, @buttonright, point(Size_x - 50,Size_y - 40)).
+
+
 
 
 
@@ -162,6 +211,40 @@ event_click(W):-
         message(@prolog, click,W, @event?position))).
 
 
+
+move_dir(W, Dir):-
+    (
+        Dir == 1,
+        retract(dimensions(Size_hex,Size_x,Size_y)),
+        assert(dimensions(Size_hex,Size_x, Size_y - 40)),
+        
+        clear_buttons(W),
+        draw_game(W)
+    );
+    (
+        Dir == 2,
+        retract(dimensions(Size_hex,Size_x,Size_y)),
+        assert(dimensions(Size_hex,Size_x , Size_y + 40 )),
+        
+        clear_buttons(W),
+        draw_game(W)
+    );
+    (
+        Dir == 3,
+        retract(dimensions(Size_hex,Size_x,Size_y)),
+        assert(dimensions(Size_hex,Size_x - 40, Size_y)),
+        
+        clear_buttons(W),
+        draw_game(W)
+    );
+    (
+        Dir == 4,
+        retract(dimensions(Size_hex,Size_x,Size_y)),
+        assert(dimensions(Size_hex,Size_x + 40, Size_y)),
+        
+        clear_buttons(W),
+        draw_game(W)
+    ).
 
 
 check_move_init_add(Type_move,W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
@@ -229,9 +312,10 @@ select_move(W, Position, Current_Player_id):-
     get(Position, x, Click_X),
     get(Position, y, Click_Y),
     
-    check_position_in_hive([Click_X,Click_Y], Size_hex, [0,Size_x], [100,700]),
+    dimensions_hive(Dim_hiveX1, Dim_hiveX2, Dim_hiveY1, Dim_hiveY2),
+
+    check_position_in_hive([Click_X,Click_Y], Size_hex, [Dim_hiveX1,Dim_hiveX2], [Dim_hiveY1,Dim_hiveY2]),
     
-    writeln("campo"),
     
     %convertimos a pixeles para poder pintar y guardar el punto en el visual en piece selected
     pixel_to_axial([Click_X,Click_Y], [X_axial,Y_axial], Size_hex,Size_x, Size_y),
@@ -278,8 +362,23 @@ click(W, Position):-
         );
         (
             % player 2 init or add
-            select_init(W, Position, p2, [40,120,200,280,360,440,520,600], [700,730,760]);
-            select_add(W, Position, p2, [40,120,200,280,360,440,520,600], [700,730,760]),!
+            (
+                dimensions_static(_,_,Size_y),
+                Static_Y1 is Size_y - 100,
+                Static_Y2 is Size_y - 70,
+                Static_Y3 is Size_y - 40,
+                
+                select_init(W, Position, p2, [40,120,200,280,360,440,520,600], [Static_Y1,Static_Y2,Static_Y3])
+            );
+            (
+                dimensions_static(_,_,Size_y),
+                Static_Y1 is Size_y - 100,
+                Static_Y2 is Size_y - 70,
+                Static_Y3 is Size_y - 40,
+                
+                select_add(W, Position, p2, [40,120,200,280,360,440,520,600], [Static_Y1,Static_Y2,Static_Y3]),!
+            )
+            
         );
         (
             current_player(Current_Player_id),
@@ -341,9 +440,11 @@ make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type,
 
 unclick(W, Player_id, Msg):-
     
+    clear_buttons(W),
     draw_game(W),
 
-    write_message(W,Msg),
+    dimensions_static(Size_hex_static, Size_x_static, Size_y_static),
+    write_message(W,Msg,[Size_x_static, Size_y_static]),
 
     
 

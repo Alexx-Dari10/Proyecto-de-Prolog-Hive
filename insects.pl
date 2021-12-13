@@ -26,9 +26,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         
-        
         member(Hex_fin, Moves),
-        writeln("casa1"),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
         Msg = "",!
         

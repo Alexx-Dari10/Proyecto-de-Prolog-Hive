@@ -5,7 +5,7 @@
 module(draw_visual,[
         draw_image_hexagon/4, draw_hexagon_axial/8, draw_hexagon_pixel/5, 
         draw_hexagon_pixel_axial/5, draw_possible_movements/4, draw_pieces/8,
-        draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4, color_player/2
+        draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4, color_player/2, draw_line/3
     ]).
 
 :-consult('../hexagon'), import('../hexagon').
@@ -82,6 +82,14 @@ draw_foreground_hex(W, [Corner_1_x, Corner_1_y],[Corner_2_x, Corner_2_y],[Corner
             send(Pa1, closed, @on),
             send(W, display, Pa1).
 
+
+draw_line(W, [Pos_x1,Pos_x2, Pos_y], Color):-
+    new(Pa2, path),
+    send(Pa2, append, point(Pos_x1, Pos_y)),
+    send(Pa2, append, point(Pos_x2, Pos_y)),
+    send(Pa2, colour, Color),
+    send(Pa2, closed, @on),
+    send(W, display, Pa2).
 
 
 draw_hexagon_axial(W, [R, Q], Size_hex, Size_x, Size_y, Image, Color, Empty):-
