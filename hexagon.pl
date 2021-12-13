@@ -64,7 +64,7 @@ all_neighbors(Hex, L_Neighbors):- findall(Neighbor_hex, are_neighbors(Hex,Neighb
 
 % saber si es un punto de articulacion
 not_articulation_point(Hex_old, L_hive):-
-    delete(L_hive, Hex_old, L_hive1),
+    delete_one(Hex_old, L_hive, L_hive1),
 
     findall(Hex_neighbor, 
             (
