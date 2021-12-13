@@ -68,20 +68,29 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         
     );
     (
-        not(Val == init),
-        not(Val == add),
+        Val == escarabajo, % aqui se incluye al mosquito tb si lo llamamos con los movimientos de escarabajo
         queen_in_game(Player_id),
 
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
-/*  
-Chequear si es mosquito o escarabajo ponerle 1 nivel mas
-        member(Hex_fin, L_hive),!, % ya hay otra ficha en esta posicion
-        %quito la ficha con el nivel que tenga y la pongo en un nivel mas
-        %NOTA: ver los niveles como las posiciones de una pila (el q esta en el nivel 0 esta en el tope de la pila) 
- */     
         
         member(Hex_fin, Moves),
+
+        Level1 is Level +1, 
+        move_insect_db(Type, Id, Player_id, Hex, Level1, Hex_fin),
+        Msg = "",
+        writeln(Msg),!
+    );
+    
+    (
+        not(Val == init),
+        not(Val == add),
+        not(Val == escarabajo),
+        not(Val == mosquito),
+        queen_in_game(Player_id),
+
+        possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         
+        member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
         Msg = "",
         writeln(Msg),!
@@ -274,7 +283,8 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         write("se hizo el cambio"),
         
         %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
-        delete(L_hive, Hex, L_1),
+        delete_one(Hex,L_hive, L_1),
+        writeln(L_1),
         append(L_1, [Hex_fin], L_2),
         retract(hive(L_hive)),
         assert(hive(L_2))
@@ -291,7 +301,9 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         assert(insect(Type, Id, Player_id, Hex_fin, Level)),
         
         %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
-        delete(L_hive, Hex, L_1),
+        write_ln("amor"),
+        delete_one(Hex, L_hive, L_1),
+        write_ln(L_1),
         append(L_1, [Hex_fin], L_2),
         retract(hive(L_hive)),
         assert(hive(L_2))
@@ -564,8 +576,10 @@ saltamonte_move([R,Q],L_hive1, Moves):-
 escarabajo_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     (
         not(insect_blocked(Type, Id, Player_id , Hex, Level)),
+        
         hexagon:not_articulation_point(Hex,L_hive),
-        delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
+        write_ln("not articulation point"),
+        delete_one(Hex, L_hive, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
         findall(Hex1, 
                 (hexagon:are_neighbors(Hex,Hex1),hexagon:connected(Hex1,L_hive1)), 
                 Moves)
@@ -573,6 +587,13 @@ escarabajo_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     (
         insect_blocked(Type, Id, Player_id , Hex, Level),
         Moves = []
+    );
+    (
+        
+        not(hexagon:not_articulation_point(Hex,L_hive)),
+        writeln("Es de articulacion"),
+        Moves = []
+        
     ).
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -624,7 +645,7 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     (
         not(insect_blocked(Type, Id, Player_id , Hex, Level)),
         hexagon:not_articulation_point(Hex,L_hive),
-        delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
+        delete_one( Hex, L_hive, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
 
         neighbor_dir(Hex,1,neighbor_1),
         neighbor_dir(Hex,2,neighbor_2),
@@ -633,12 +654,12 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         neighbor_dir(Hex,5,neighbor_5),
         neighbor_dir(Hex,6,neighbor_6),
 
-        mosquito_move(neighbor_1, Moves_1,L_hive),
-        mosquito_move(neighbor_2, Moves_2,L_hive),
-        mosquito_move(neighbor_3, Moves_3,L_hive),
-        mosquito_move(neighbor_4, Moves_4,L_hive),
-        mosquito_move(neighbor_5, Moves_5,L_hive),
-        mosquito_move(neighbor_6, Moves_6,L_hive),
+        mosquito_move(Hex,neighbor_1, Moves_1,L_hive),
+        mosquito_move(Hex,neighbor_2, Moves_2,L_hive),
+        mosquito_move(Hex,neighbor_3, Moves_3,L_hive),
+        mosquito_move(Hex,neighbor_4, Moves_4,L_hive),
+        mosquito_move(Hex,neighbor_5, Moves_5,L_hive),
+        mosquito_move(Hex,neighbor_6, Moves_6,L_hive),
 
         append(Moves_1, Moves_2, Moves_temp1),
         append(Moves_temp1, Moves_3, Moves_temp2),
@@ -653,10 +674,10 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         Moves = []
     ).
     
-mosquito_move(Hex_neighbor, Moves,L_hive):-
+mosquito_move(Hex,Hex_neighbor, Moves,L_hive):-
     (
         insect(Type,_,_,Hex_neighbor,Level),
-        possible_moves(Val, Type, Id, Player_id , Hex_neighbor, Level, Moves, L_hive)
+        possible_moves(Val, Type, Id, Player_id , Hex, Level, Moves, L_hive)
     );
     (
         not(insect(Type,_,_,Hex_neighbor,Level)),
