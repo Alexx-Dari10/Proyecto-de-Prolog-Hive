@@ -1,6 +1,6 @@
 module(insects, [
         start_insects/3, insect/5, possible_moves/8, move_insect_db/6, move_insect/9,start_game/0,
-        set_hex_to_type/5, select_in_hand/6,find_insect_high_level/2
+        set_hex_to_type/5, select_in_hand/6,find_insect_high_level/2, end_game/1, tie_game/3 
     ]).
 
 :- consult(hexagon), import(hexagon).
@@ -317,7 +317,9 @@ player_can_play(Player_id, L_hive):-
     ).
 
 % juego terminado 
-end_game(Player_id, L_hive):-
+end_game(Player_id):-
+    hive(L_hive),
+
     insect(abejaReina, Id, Player_id, Hex, Level),
     member(Hex, L_hive),
     findall(Hex_neighbor, 
@@ -326,14 +328,14 @@ end_game(Player_id, L_hive):-
     
     length(L_neighbors, Length),
     Length == 6,
-    writeln("Fin de la partida. Perdio: "),
-    writeln(Player_id).
+    player(P_id, _,_,_), not(P_id == Player_id),
+    write("Winner: "), writeln(P_id).
     
 
 % juego empatado  
-tie_game(Player_id1, Player_id2, L_hive):-
-    end_game(Player_id1, L_hive),
-    end_game(Player_id2, L_hive),
+tie_game(Player_id1, Player_id2):-
+    end_game(Player_id1),
+    end_game(Player_id2),
     writeln("Juego empatado").   
     
 
@@ -343,8 +345,9 @@ game():-
 
 restart_game():-
     retractall(player(_,_,_,_)),
-    retractall(insects:insect(_,_,_,_,_)),
-    start_game().
+    retractall(insect(_,_,_,_,_)),
+    retractall(hive(_)).
+    
 
 
 
@@ -870,7 +873,7 @@ bichoBola_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
                 (
                     hexagon:are_neighbors(Hex,Hex2), 
                     hexagon:connected(Hex2,L_hive1),
-                    delete_one(Hex2, L_hive1, L_hive2),
+                    %delete_one(Hex2, L_hive1, L_hive2),
                     hexagon:not_articulation_point(Hex2,L_hive2)
                 ),
                 Moves)

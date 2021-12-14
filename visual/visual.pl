@@ -10,7 +10,7 @@
 
 :-dynamic bool_selected/1, piece_selected/5,pieces/4, 
         init_player/2, move_state/1, current_player/1, arrowLeft/3, dimensions/3, dimensions_hive/4,
-        dimensions_static/3, arrow_left/3.
+        dimensions_static/3, arrow_left/3, game_over/1, tie/1, win/1, message_end_game/1.
 
 
 change_player(p1,p2).
@@ -49,8 +49,11 @@ resource(arrow_negra, image,image('negra.jpg')).
 
 
 main:-
+
     insects:start_game(),
 
+    assert(game_over(false)),
+    assert(message_end_game('')),
     assert(dimensions(40,1000,800)),
 
     dimensions(Size_hex, Size_x, Size_y),
@@ -115,62 +118,218 @@ main:-
     send(W, open).
 
 
-
-
-draw_game(W):-
-    clear_game(W), 
-
+restart(W):-
     
-    dimensions(Size_hex,Size_x,Size_y),
+    
+    clear_buttons(W),
+    clear_game(W),
+
+    insects:restart_game(),
+
+    retractall(win(_)),
+    retractall(tie(_)),
+    retractall(message_end_game(_)),
+    retractall(game_over(_)),
+    retractall(dimensions(_,_,_)),
+    retractall(dimensions_static(_,_,_)),
+    retractall(bool_selected(_)),
+    retractall(piece_selected(_,_,_,_,_)),
+    retractall(init_player(_,_)),
+    retractall(current_player(_)),
+    retractall(move_state(_)),
+    retractall(arrow_left(_,_,_)),
+    retractall(pieces(_,_,_,_)),
+    retractall(dimensions_hive(_,_,_,_)),
+
+    insects:start_game(),
+
+    assert(game_over(false)),
+    assert(message_end_game('')),
+    assert(dimensions(40,1000,800)),
+
+    dimensions(Size_hex, Size_x, Size_y),
+    
+    assert(dimensions_static(Size_hex, Size_x, Size_y)),
 
     dimensions_static(Size_hex_static, Size_x_static, Size_y_static),
+
+    assert(bool_selected(false)),
+    assert(piece_selected(_,_,_,_,_)),
     
-    %pinta las piezas del jugador 1
-    findall(_, 
+
+    assert(init_player(p1,true)),
+    assert(init_player(p2,true)),
+    assert(current_player(p1)),
+    
+
+    assert(move_state(init)),
+    
+    Static_Y1 is Size_y_static - 100,
+    Static_Y2 is Size_y_static - 70,
+    Static_Y3 is Size_y_static - 40,
+
+    assert(arrow_left(p1, [700,40], arrow_blanca)),
+    assert(arrow_left(p2, [700,Static_Y1],arrow_negra)),
+    %Variables
+    assert(pieces(p1, hormiga    ,[[40,40],  [40,70],  [40, 100]], [])),
+    assert(pieces(p1, escarabajo ,[[120,40], [120,70]           ], [])),
+    assert(pieces(p1, saltamonte ,[[200,40], [200,70], [200,100]], [])),
+    assert(pieces(p1, abejaReina ,[[280,40]                     ], [])),
+    assert(pieces(p1, aranha     ,[[360,40], [360,70]           ], [])),
+    assert(pieces(p1, mariquita  ,[[440,40]                     ], [])),
+    assert(pieces(p1, mosquito  ,[[520,40]                     ], [])),
+    assert(pieces(p1, bichoBola  ,[[600,40]                     ], [])),
+
+    assert(pieces(p2, hormiga    ,[[40,Static_Y1 ], [40,Static_Y2 ],[40, Static_Y3]], [])),
+    assert(pieces(p2, escarabajo ,[[120,Static_Y1], [120,Static_Y2]          ], [])),
+    assert(pieces(p2, saltamonte ,[[200,Static_Y1], [200,Static_Y2],[200,Static_Y3]], [])),
+    assert(pieces(p2, abejaReina ,[[280,Static_Y1]                     ], [])),
+    assert(pieces(p2, aranha     ,[[360,Static_Y1], [360,Static_Y2]          ], [])),
+    assert(pieces(p2, mariquita  ,[[440,Static_Y1]                     ], [])),
+    assert(pieces(p2, mosquito   ,[[520,Static_Y1]                     ], [])),
+    assert(pieces(p2, bichoBola  ,[[600,Static_Y1]                     ], [])),
+
+
+   
+
+    assert(dimensions_hive(0, Size_x, 100, Static_Y1)),
+
+    
+    new(Lbl2, label),
+    insects:start_insects(p1, [40,120,200,280,360,440,520,600], [40,70,100]),
+    insects:start_insects(p2, [40,120,200,280,360,440,520,600], [Static_Y1,Static_Y2,Static_Y3]),
+         
+    draw_game(W).
+
+   
+
+check_end_game(W):-
+    (
+        insects:end_game(p1),
+        assert(win(p2))
+        
+    );
+    (
+        insects:end_game(p2),
+        assert(win(p1))
+        
+    );
+    ( 
+        insects:tie_game(p1, p2),
+        assert(tie(true))
+    ).
+
+
+draw_board(W):-
+        clear_game(W), 
+
+        
+        dimensions(Size_hex,Size_x,Size_y),
+
+        dimensions_static(Size_hex_static, Size_x_static, Size_y_static),
+        
+        %pinta las piezas del jugador 1
+        findall(_, 
+                (
+                    pieces(p1, Type, Initials, In_hive),
+                    (
+                        (
+                            draw_pieces(W, p1,Size_hex,Size_x_static, Size_y_static, Type, Initials, false),
+                            draw_pieces(W, p1,Size_hex,Size_x, Size_y,Type, In_hive, true)
+                        ); 
+                        (
+                            draw_pieces(W, p1,Size_hex,Size_x, Size_y,Type, In_hive, true),
+                            draw_pieces(W, p1,Size_hex,Size_x_static, Size_y_static, Type, Initials, false)
+                        )
+                    )
+                ), _),
+        
+        %pinta las piezas del jugador 2
+
+        findall(_, 
             (
-                pieces(p1, Type, Initials, In_hive),
+                pieces(p2, Type, Initials2, In_hive2),
                 (
                     (
-                        draw_pieces(W, p1,Size_hex,Size_x_static, Size_y_static, Type, Initials, false),
-                        draw_pieces(W, p1,Size_hex,Size_x, Size_y,Type, In_hive, true)
+                        draw_pieces(W, p2,Size_hex,Size_x_static, Size_y_static, Type, Initials2, false),
+                        draw_pieces(W, p2,Size_hex,Size_x, Size_y,Type, In_hive2, true)
                     ); 
                     (
-                        draw_pieces(W, p1,Size_hex,Size_x, Size_y,Type, In_hive, true),
-                        draw_pieces(W, p1,Size_hex,Size_x_static, Size_y_static, Type, Initials, false)
+                        draw_pieces(W, p2,Size_hex,Size_x, Size_y,Type, In_hive2, true),
+                        draw_pieces(W, p2,Size_hex,Size_x_static, Size_y_static, Type, Initials2, false)
                     )
                 )
             ), _),
-    
-    %pinta las piezas del jugador 2
 
-    findall(_, 
-        (
-            pieces(p2, Type, Initials2, In_hive2),
-            (
-                (
-                    draw_pieces(W, p2,Size_hex,Size_x_static, Size_y_static, Type, Initials2, false),
-                    draw_pieces(W, p2,Size_hex,Size_x, Size_y,Type, In_hive2, true)
-                ); 
-                (
-                    draw_pieces(W, p2,Size_hex,Size_x, Size_y,Type, In_hive2, true),
-                    draw_pieces(W, p2,Size_hex,Size_x_static, Size_y_static, Type, Initials2, false)
-                )
-            )
-        ), _),
+        
+        current_player(Current),
+        arrow_left(Current,Hex_arrow, Arrow_name),
+        
+        draw_image_hexagon(W, Arrow_name,Hex_arrow),
+        
+        dimensions_hive(Dim_hiveX1, Dim_hiveX2, Dim_hiveY1, Dim_hiveY2),
 
-    
-    current_player(Current),
-    arrow_left(Current,Hex_arrow, Arrow_name),
-    
-    draw_image_hexagon(W, Arrow_name,Hex_arrow),
-    
-    dimensions_hive(Dim_hiveX1, Dim_hiveX2, Dim_hiveY1, Dim_hiveY2),
+        draw_visual:draw_line(W, [Dim_hiveX1,Dim_hiveX2,Dim_hiveY1 + Size_hex], white),
 
-    draw_visual:draw_line(W, [Dim_hiveX1,Dim_hiveX2,Dim_hiveY1 + Size_hex], white),
+        draw_visual:draw_line(W, [Dim_hiveX1,Dim_hiveX2,Dim_hiveY2 - Size_hex], black),
+        
+        draw_buttons(W),
+        message_end_game(Message),
+        write_message(W,Message,[400, 400]).
 
-    draw_visual:draw_line(W, [Dim_hiveX1,Dim_hiveX2,Dim_hiveY2 - Size_hex], black),
-    
-    draw_buttons(W).
+
+draw_game(W):-
+    (
+        not(check_end_game(W)),
+        draw_board(W)
+    );
+    (
+        check_end_game(W),
+        win(p1),
+        
+        retract(message_end_game(_)),
+        assert(message_end_game("Winner Player 1")),
+        
+
+        draw_board(W),
+       
+        
+        retract(game_over(false)),
+        assert(game_over(true))
+        
+        
+        
+    ),!;
+    (
+        check_end_game(W),
+        win(p2),
+        
+        retract(message_end_game(_)),
+        assert(message_end_game("Winner Player 2")),
+        
+        draw_board(W),
+
+        retract(game_over(false)),
+        assert(game_over(true))
+        
+       
+        
+    ),!;
+    (
+        check_end_game(W),
+        tie(true),
+        
+        retract(message_end_game(_)),
+        assert(message_end_game("Tie game")),
+        
+        draw_board(W),
+       
+        retract(game_over(false)),
+        assert(game_over(true))
+        
+        
+       
+    ).
 
 
 
@@ -182,7 +341,8 @@ clear_buttons(W):-
     send(@buttonup, free),
     send(@buttondown, free ),
     send(@buttonleft, free),
-    send(@buttonright, free).
+    send(@buttonright, free),
+    send(@buttonrestart, free).
 
 
 
@@ -194,12 +354,15 @@ draw_buttons(W):-
     new(@buttonleft, button("left", message(@prolog, move_dir,W,3))),
     new(@buttonright, button("right", message(@prolog, move_dir,W,4))),
 
+    new(@buttonrestart, button("restart", message(@prolog, restart, W))),
+
     dimensions_static(Size_hex, Size_x, Size_y),
 
     send(W,display, @buttonup, point(Size_x-100,Size_y - 50)),
     send(W,display, @buttondown, point(Size_x-100,Size_y - 30)),
     send(W,display, @buttonleft, point(Size_x-150,Size_y - 40)),
-    send(W,display, @buttonright, point(Size_x - 50,Size_y - 40)).
+    send(W,display, @buttonright, point(Size_x - 50,Size_y - 40)),
+    send(W,display, @buttonrestart, point(Size_x-150,100)).
 
 
 
@@ -219,7 +382,7 @@ move_dir(W, Dir):-
         assert(dimensions(Size_hex,Size_x, Size_y - 40)),
         
         clear_buttons(W),
-        draw_game(W)
+        draw_board(W)
     );
     (
         Dir == 2,
@@ -227,7 +390,7 @@ move_dir(W, Dir):-
         assert(dimensions(Size_hex,Size_x , Size_y + 40 )),
         
         clear_buttons(W),
-        draw_game(W)
+        draw_board(W)
     );
     (
         Dir == 3,
@@ -235,7 +398,7 @@ move_dir(W, Dir):-
         assert(dimensions(Size_hex,Size_x - 40, Size_y)),
         
         clear_buttons(W),
-        draw_game(W)
+        draw_board(W)
     );
     (
         Dir == 4,
@@ -243,7 +406,7 @@ move_dir(W, Dir):-
         assert(dimensions(Size_hex,Size_x + 40, Size_y)),
         
         clear_buttons(W),
-        draw_game(W)
+        draw_board(W)
     ).
 
 
@@ -356,6 +519,7 @@ select_move(W, Position, Current_Player_id):-
 
 click(W, Position):-
         (
+            game_over(false),
             % player 1 init or add
             select_init(W, Position, p1, [40,120,200,280,360,440,520,600], [40,70,100]);
             select_add(W, Position, p1, [40,120,200,280,360,440,520,600], [40,70,100]),!
@@ -363,6 +527,7 @@ click(W, Position):-
         (
             % player 2 init or add
             (
+                game_over(false),
                 dimensions_static(_,_,Size_y),
                 Static_Y1 is Size_y - 100,
                 Static_Y2 is Size_y - 70,
@@ -371,6 +536,7 @@ click(W, Position):-
                 select_init(W, Position, p2, [40,120,200,280,360,440,520,600], [Static_Y1,Static_Y2,Static_Y3])
             );
             (
+                game_over(false),
                 dimensions_static(_,_,Size_y),
                 Static_Y1 is Size_y - 100,
                 Static_Y2 is Size_y - 70,
@@ -381,13 +547,14 @@ click(W, Position):-
             
         );
         (
+            game_over(false),
             current_player(Current_Player_id),
             
             select_move(W, Position, Current_Player_id),!
         );
 
         (
-            
+            game_over(false),
             % mover la ficha seleccionada
             
             move_state(Type_state),
@@ -442,6 +609,7 @@ unclick(W, Player_id, Msg):-
     
     clear_buttons(W),
     draw_game(W),
+
 
     dimensions_static(Size_hex_static, Size_x_static, Size_y_static),
     write_message(W,Msg,[Size_x_static, Size_y_static]),
