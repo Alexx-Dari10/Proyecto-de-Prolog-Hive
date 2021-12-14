@@ -1,5 +1,5 @@
 module(insects, [
-        start_insects/3, insect/5, possible_moves/8, move_insect_db/6, move_insect/8,start_game/0,
+        start_insects/3, insect/5, possible_moves/8, move_insect_db/6, move_insect/9,start_game/0,
         set_hex_to_type/5, select_in_hand/6,find_insect_high_level/2
     ]).
 
@@ -20,7 +20,7 @@ start_game():-
 
 
 
-move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
+move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, Id2, Player_id2, Hex2, Level2,Hex_select2]):-
     (
         Val == init,
         
@@ -28,6 +28,12 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
         Msg = "",!
         
     );
@@ -39,12 +45,24 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         write("Type: "), writeln([Type, Id, Player_id, Hex, 0, Hex_fin]),
         
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
         Msg = "",!
     );
     (
         Val == add,
         must_add_queen(Player_id),
         not(Type == abejaReina),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
         Msg = "Must add queen. 4 movement",!
         
     );
@@ -55,6 +73,12 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
         Msg = "",!
         
     );
@@ -63,10 +87,17 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         not(Val == add),
         
         
-        not(queen_in_game(Player_id)),
+        not(queen_in_game(Player_id)),!,
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
+        writeln("Add queen to move any piece"),
         Msg = "Add queen to move any piece",!
         
-    );
+    ),!;
     (
         Val == escarabajo, % aqui se incluye al mosquito tb si lo llamamos con los movimientos de escarabajo
         queen_in_game(Player_id),
@@ -77,6 +108,12 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
 
         Level1 is Level +1, 
         move_insect_db(Type, Id, Player_id, Hex, Level1, Hex_fin),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
         Msg = "",
         writeln(Msg),!
     );
@@ -85,16 +122,84 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg):-
         not(Val == init),
         not(Val == add),
         not(Val == escarabajo),
-        not(Val == mosquito),
+        %not(Val == mosquito),
+        not(Val == bichoBola),
+        
         queen_in_game(Player_id),
 
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
         Msg = "",
+        write("Aqui entrooooo"),
+        
+        writeln(Msg),!
+    );
+    (
+        Val == bichoBola,
+        queen_in_game(Player_id),
+
+        possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        
+        member(Hex_fin, Moves),
+        not(member(Hex_fin, L_hive)),
+       
+        
+        writeln("Hola1"),
+        move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
+        Type2 = Type,
+        Id2 = Id,
+        Player_id2 = Player_id,
+        Hex2 = Hex_fin,
+        Level2 = Level,
+        Hex_select2 = Hex,
+        Msg = "",
+        write("Aqui entrooooo1"),
+        writeln(Msg),!
+    );
+    (
+        Val == bichoBola,
+        queen_in_game(Player_id),
+
+        possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
+        
+        member(Hex_fin, Moves),
+        member(Hex_fin, L_hive),
+        writeln("Hola2"),
+
+
+        find_empty_hex_to_move(Moves, L_hive, [Type2, Id2, Player_id2, Hex2, Level2],Hex_fin),
+        
+        writeln([Type2, Id2, Player_id2, Hex_fin, Level2, Hex2]),
+        Hex_select2 = Hex_fin,
+        move_insect_db(Type2, Id2, Player_id2, Hex_fin, Level2, Hex2), !,
+        writeln([Type2, Id2, Player_id2, Hex_fin, Level2, Hex2]),
+        writeln(Val),
+    
+        Msg = "",
+        write("Aqui entrooooo2"),
         writeln(Msg),!
     ).
+
+
+%bichoBola find
+find_empty_hex_to_move(Moves, L_hive, [Type, Id, Player_id, Hex, Level],Hex_select):-
+    member(Hex, Moves),
+    not(member(Hex, L_hive)),
+  
+    %delete_one(Hex2, L_hive1, L_hive2),
+    hexagon:not_articulation_point(Hex_select,L_hive),
+    insect(Type, Id, Player_id, Hex_select, Level),!.
+
+%
+
 
 %% encontrar el insecto de mayor nivel en la colmena      
 find_high_level([],Lev,Insect, Insect):-!.
@@ -277,7 +382,7 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         hive(L_hive),
         
         % agrega el insecto a la colmena poniendole nivel 0
-        retract(insect(Type, Id, Player_id, Hex, _)),
+        retract(insect(Type, Id, Player_id, Hex, Lev)),
         assert(insect(Type, Id, Player_id, Hex_fin, Level)),
         
         write("se hizo el cambio"),
@@ -297,11 +402,11 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         
 
         % agrega el insecto a la colmena poniendole nivel 0
-        retract(insect(Type, Id, Player_id,Hex, _)),
+        retract(insect(Type, Id, Player_id,Hex, Lev)),
         assert(insect(Type, Id, Player_id, Hex_fin, Level)),
         
         %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
-        write_ln("amor"),
+        
         delete_one(Hex, L_hive, L_1),
         write_ln(L_1),
         append(L_1, [Hex_fin], L_2),
@@ -328,8 +433,6 @@ find_insects_in_hive(Player,L):-
 
 
 
-
-%revisar esto
 
 give_adj(Index, Index1,Index2):-
     (Index == 6, Index1 = 5, Index2 = 1, !);
@@ -647,19 +750,23 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         hexagon:not_articulation_point(Hex,L_hive),
         delete_one( Hex, L_hive, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
 
-        neighbor_dir(Hex,1,neighbor_1),
-        neighbor_dir(Hex,2,neighbor_2),
-        neighbor_dir(Hex,3,neighbor_3),
-        neighbor_dir(Hex,4,neighbor_4),
-        neighbor_dir(Hex,5,neighbor_5),
-        neighbor_dir(Hex,6,neighbor_6),
+        writeln(Hex),
+        
+        neighbor_dir(Hex,Neighbor_1,1),
+        neighbor_dir(Hex,Neighbor_2,2),
+        neighbor_dir(Hex,Neighbor_3,3),
+        neighbor_dir(Hex,Neighbor_4,4),
+        neighbor_dir(Hex,Neighbor_5,5),
+        neighbor_dir(Hex,Neighbor_6,6),
 
-        mosquito_move(Hex,neighbor_1, Moves_1,L_hive),
-        mosquito_move(Hex,neighbor_2, Moves_2,L_hive),
-        mosquito_move(Hex,neighbor_3, Moves_3,L_hive),
-        mosquito_move(Hex,neighbor_4, Moves_4,L_hive),
-        mosquito_move(Hex,neighbor_5, Moves_5,L_hive),
-        mosquito_move(Hex,neighbor_6, Moves_6,L_hive),
+        writeln("msquitooooooooooooooooooooooo"),
+
+        mosquito_move([Hex, Id, Player_id, Level],Neighbor_1, Moves_1,L_hive1),
+        mosquito_move([Hex, Id, Player_id, Level],Neighbor_2, Moves_2,L_hive1),
+        mosquito_move([Hex, Id, Player_id, Level],Neighbor_3, Moves_3,L_hive1),
+        mosquito_move([Hex, Id, Player_id, Level],Neighbor_4, Moves_4,L_hive1),
+        mosquito_move([Hex, Id, Player_id, Level],Neighbor_5, Moves_5,L_hive1),
+        mosquito_move([Hex, Id, Player_id, Level],Neighbor_6, Moves_6,L_hive1),
 
         append(Moves_1, Moves_2, Moves_temp1),
         append(Moves_temp1, Moves_3, Moves_temp2),
@@ -674,17 +781,23 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         Moves = []
     ).
     
-mosquito_move(Hex,Hex_neighbor, Moves,L_hive):-
+mosquito_move([Hex_mosq, Id_mosq, Player_id_mosq , Level_mosq], Hex_neighbor, Moves,L_hive):-
     (
-        insect(Type,_,_,Hex_neighbor,Level),
-        possible_moves(Val, Type, Id, Player_id , Hex, Level, Moves, L_hive)
+        insect(Type,_,_,Hex_neighbor,_),
+        not(Type == mosquito),
+        possible_moves(Type, Type, Id_mosq, Player_id_mosq , Hex_mosq, Level_mosq, Moves, L_hive)
+        
     );
     (
-        not(insect(Type,_,_,Hex_neighbor,Level)),
+        insect(Type,_,_,Hex_neighbor,_),
+        Type == mosquito,
+        Moves=[]
+    );
+    (
+        not(insect(Type,_,_,Hex_neighbor,_)),
         Moves=[]
     ).
 
-neighbor_dir([R1,Q1],Dir,[R2,Q2]):- hexagon:direction(Dir,[R_dir,Q_dir]), R2 is R1+R_dir, Q2 is Q1+Q_dir.
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -743,16 +856,49 @@ bichoBola_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         hexagon:not_articulation_point(Hex,L_hive),
         delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
         findall(Hex1, 
-                (hexagon:are_neighbors(Hex,Hex1), not(member(Hex1, L_hive1)), hexagon:connected(Hex1,L_hive1)),
+                (
+                    hexagon:are_neighbors(Hex,Hex1), 
+                    not(member(Hex1, L_hive1)), 
+                    hexagon:connected(Hex1,L_hive1)
+                ),
+                Moves_empty),
+        length(Moves_empty, Length_empty),
+
+        Length_empty > 0, % si no se cumple esto entonces no se puede mover para ningun lado
+
+        findall(Hex2, 
+                (
+                    hexagon:are_neighbors(Hex,Hex2), 
+                    hexagon:connected(Hex2,L_hive1),
+                    delete_one(Hex2, L_hive1, L_hive2),
+                    hexagon:not_articulation_point(Hex2,L_hive2)
+                ),
                 Moves)
+        
+        
+    );
+    (
+        not(insect_blocked(Type, Id, Player_id , Hex, Level)),
+        hexagon:not_articulation_point(Hex,L_hive),
+        delete(L_hive, Hex, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
+        findall(Hex1, 
+                (
+                    hexagon:are_neighbors(Hex,Hex1), 
+                    not(member(Hex1, L_hive1)), 
+                    hexagon:connected(Hex1,L_hive1)
+                ),
+                Moves_empty),
+        length(Moves_empty, Length_empty),
+
+        Length_empty == 0, % no hay lugar vacio para moverse
+
+        Moves = []
+        
     );
     (
         insect_blocked(Type, Id, Player_id , Hex, Level),
         Moves = []
     ).
-    % falta hacer la habilidad especial
-    % preguntar si es dar click sobre ella y la ficha q se va a mover
-
 
 
 

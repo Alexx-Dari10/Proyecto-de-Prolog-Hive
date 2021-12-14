@@ -267,13 +267,13 @@ check_move_init_add(Type_move,W,Position,Player_id, [X1,X2,X3,X4,X5,X6,X7,X8], [
         
         
         hive(L_hive),
-        write_ln(Type_move),
+        writeln(Type_move),
 
         possible_moves(Type_move, Type, Id, Player_id , Hex_select, -1, Moves, L_hive),
 
        
         length(Moves, Length_moves),
-        write_ln(Length_moves),
+        writeln(Length_moves),
         Length_moves > 0,
         
         
@@ -459,22 +459,28 @@ unclick(W, Player_id, Msg):-
 
 make_move_state(W, Position, Type_move):-
     (
-        write_ln("primero"),
+        writeln("primero"),
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
                             Level,[X_axial,Y_axial]),
 
         
-        move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg),
+        move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+        
+        write("mensaje"),writeln(Msg),
         Msg == "",
+
+        writeln([Type2, Id2, Player_id2, Hex2, Level2]),
         
         color_player(Player_id,Col),
         
+        
+        
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type2,Id2,Player_id2,Hex_select2,Level2)),
+        
 
-        axial_to_pixel([X_axial,Y_axial], [X_pixel,Y_pixel], Size_hex, Size_x, Size_y),
-        
-        
-    
-        move_piece(W, [X_axial,Y_axial], Type, Col), 
+        move_piece(W, Hex2, Type2, Col), 
         
         retract(init_player(Player_id, _)),
         assert(init_player(Player_id, false)),
@@ -489,15 +495,16 @@ make_move_state(W, Position, Type_move):-
 
         unclick(W, Player_id,Msg),
         !
-    ),!;       
-
+    );       
+    
     (
         
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             Level,[X_axial,Y_axial]),
 
         
-        not(move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg)),
+        not(move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2])),
 
         
         writeln("Invalid move"),
@@ -509,7 +516,11 @@ make_move_state(W, Position, Type_move):-
     (
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             Level,[X_axial,Y_axial]),
-        move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg),
+        
+        write_ln([Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial]]),
+        move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+        writeln("helllooooooo"),
         not(Msg == ""),
         
         writeln(Msg),
