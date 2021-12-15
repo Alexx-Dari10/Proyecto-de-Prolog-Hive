@@ -8,6 +8,9 @@
 
 :-consult('draw_visual'), import('draw_visual').
 
+:- consult('../ia'), import('../ia').
+
+
 :-dynamic bool_selected/1, piece_selected/5,pieces/4, 
         init_player/2, move_state/1, current_player/1, arrowLeft/3, dimensions/3, dimensions_hive/4,
         dimensions_static/3, arrow_left/3, game_over/1, tie/1, win/1, message_end_game/1.
@@ -775,6 +778,8 @@ get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves):-
             member([Type, Initials, In_hive], Pieces_player),
 
             member(Hex, In_hive),
+            
+            not_articulation_point(Hex, L_hive),
 
             insect(Type, Id, Player_id,Hex, Level),
 
@@ -783,32 +788,73 @@ get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves):-
         ), 
         All_moves).
 
-axial_distance([R1,Q1], [R2,Q2], Dist):-
-    R_abs = abs(R1-R2),
-    Q_abs = abs(Q1-Q2),
-    S_abs = abs(-R1 - Q1 + R2 + Q2),
-    Dist = (R_abs + Q_abs + S_abs)/2.
 
 
 
-ia(W, Player_id):-
+find_insects(Player_id, Val, Moves):-
+
     (
+        Val == add,
+        findall(Hex, 
+            (
+                insect(Type, Id, Player_id, Hex, Level),
+                Level == -1
+            ),
+            Moves)
+    );
+    (
+        not(Val == add),
+        findall(Hex, 
+            (
+                insect(Type, Id, Player_id, Hex, Level),
+                Level > -1
+            ),
+            Moves)
+    ).
+
+
+
+
+move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]):-
+    color_player(Player_id,Col),
+        
+        
+        
+    retract(piece_selected(_,_,_,_,_)),
+    assert(piece_selected(Type2,Id2,Player_id2,Hex_select2,Level2)),
+    
+
+    move_piece(W, Hex2, Type2, Col), 
+    
+    retract(init_player(Player_id, _)),
+    assert(init_player(Player_id, false)),
+
+    change_player_turn(Type2, Player_id, Hex_select2, Level2, Hex2, L_hive), % ver cuando esto no se cumple
+    
+    
+    change_player(Player_id, Other_player),
+    retract(current_player(_)),
+    assert(current_player(Other_player)),
+   
+    unclick(W, Player_id,Msg).
+
+
+
+
+
+init_move_IA(W,Player_id):-
         get_all_pieces_player(W, Player_id, Pieces_player),
 
         init_player(Player_id,true),
         get_possible_moves_initials(W, init, Player_id, Pieces_player, All_moves_init),
 
-        %heuristica para seleccionar el valor
-        %despues poner aqui un random
-        
+       
         member([init, escarabajo, 2, Player_id, Hex_select, Level, Moves], All_moves_init),
 
         length(Moves, Length_mov),
         
         
-        New_Length_mov is Length_mov + 1,
-        writeln(New_Length_mov),
-        random(0,  New_Length_mov, Rnd),
+        random(0,  Length_mov, Rnd),
         writeln(Rnd),
         insects:utils:element_at(Moves, Rnd , Hex_move),
 
@@ -820,39 +866,235 @@ ia(W, Player_id):-
         move_insect(init, escarabajo, 2, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
             [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
         
-        Msg == "",
+        Msg == "", 
 
-        writeln([Type2, Id2, Player_id2, Hex2, Level2]),
-        
-        color_player(Player_id,Col),
-        
-        
-        
-        retract(piece_selected(_,_,_,_,_)),
-        assert(piece_selected(Type2,Id2,Player_id2,Hex_select2,Level2)),
+        move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
         
 
-        move_piece(W, Hex2, Type2, Col), 
+must_add_queen_IA(W, Player_id):-
+    insects:must_add_queen(Player_id),
         
-        retract(init_player(Player_id, _)),
-        assert(init_player(Player_id, false)),
+        get_all_pieces_player(W, Player_id, Pieces_player),
 
-        change_player_turn(Type2, Player_id, Hex_select2, Level2, Hex2, L_hive), % ver cuando esto no se cumple
+        init_player(Player_id,false),
+
+
+        get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
         
-        
-        change_player(Player_id, Other_player),
-        retract(current_player(_)),
-        assert(current_player(Other_player)),
+
+        member([add ,abejaReina, Id, Player_id, Hex_select, Level, Moves_queen],All_moves_add),
+
        
 
-        unclick(W, Player_id,Msg),
+        length(Moves_queen, All_moves_queen),
+        
+
+       
+        random(0, All_moves_queen, Rnd_all_mov),
+        insects:utils:element_at(Moves_queen, Rnd_all_mov , Hex_move), 
+       
+        
+
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(abejaReina,1,Player_id,Hex_select,-1)),
+
+        hive(L_hive),
+
+        move_insect(add, abejaReina, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+        
+       
+        move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
+
+
+add_init_IA(W, Player_id):-
+    not(insects:queen_in_game(Player_id)),
+    
+    change_player(Player_id, Player_id_other),
+
+    not(insects:queen_in_game(Player_id_other)),
+
+    get_all_pieces_player(W, Player_id, Pieces_player),
+    
+
+    get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
+
+    
+    length(All_moves_add, Length_all_mov),
+    
+    
+
+    random(0, Length_all_mov, Rnd_all_mov),
+    insects:utils:element_at(All_moves_add, Rnd_all_mov , [Val,Type, Id, Player_id, Hex_select, Level, Moves]), % aqui devolver el ultimo id
+    
+    
+    length(Moves, Length_mov),
+    
+
+    random(0, Length_mov, Rnd),
+    insects:utils:element_at(Moves, Rnd , Hex_move),
+
+    retract(piece_selected(_,_,_,_,_)),
+    assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
+
+    hive(L_hive),
+
+    
+    move_insect(Val, Type, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+        [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+    
+    
+
+    Msg == "",
+
+    move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
+
+
+not_queen_IA_yep_queen_other(W, Player_id):-
+    not(insects:queen_in_game(Player_id)),
+        
+        change_player(Player_id, Player_id_other),
+
+        insects:queen_in_game(Player_id_other),
+        
+        get_all_pieces_player(W, Player_id, Pieces_player),
+
+        get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
+
+        init_player(Player_id,false),
+
+        get_all_possible_moves(All_moves_add, [], All_moves_next_to_one_resp),
 
         
-        writeln(Hex_move)
+        insect(abejaReina, 1, Player_id_other, Hex_queen2, _),
 
-    );
-    (
-        get_all_pieces_player(W, Player_id, Pieces_player),
+
+
+        find_move_more_near_to_queen(Hex_queen2, All_moves_next_to_one_resp, 1000, [], Moves_near_resp),
+        
+        write("Moves near resp"), writeln(Moves_near_resp),
+
+        length(Moves_near_resp, Length_moves_near_resp),
+        
+
+        random(0, Length_moves_near_resp, Rnd),
+        insects:utils:element_at(Moves_near_resp, Rnd , Hex_move),
+
+        findall(Hex_select,
+                (
+                    member([Val,Type, Id, Player_id,Hex_select, Level, Moves], All_moves_add),
+                    member(Hex_move, Moves)
+                ),
+                (All_hex_select)),
+        
+        length(All_hex_select, Length_hex_select),
+        
+        random(0, Length_hex_select, Rnd_hex_select),
+        insects:utils:element_at(All_hex_select, Rnd_hex_select , Hex_select),
+        
+        write("Hex select: "),writeln(Hex_select),
+
+        insect(Type, Id,Player_id,Hex_select,Level),
+
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
+
+        hive(L_hive),
+
+        move_insect(add, Type, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+        
+        writeln(Msg),
+
+        Msg == "",
+
+        move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
+
+
+yep_queen_IA_not_queen_other(W, Player_id):-
+    get_all_pieces_player(W, Player_id, Pieces_player),
+
+    insects:queen_in_game(Player_id),
+
+    change_player(Player_id, Player_id_other),
+
+    not(insects:queen_in_game(Player_id_other)),
+
+
+
+    init_player(Player_id,false),
+    get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
+
+    get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves_in_hive),
+
+
+
+    append(All_moves_add, All_moves_in_hive, All_moves),
+
+   
+    
+    get_all_possible_moves(All_moves, [], All_moves_next_to_one_resp),
+
+    writeln(All_moves_next_to_one_resp),
+    
+
+    insect(abejaReina, 1, Player_id, Hex_queen, _),
+
+    find_move_more_far_to_queen(Hex_queen, All_moves_next_to_one_resp, -1, [], Moves_far_resp),
+    
+    write("Moves far resp"), writeln(Moves_far_resp),
+
+
+    length(Moves_far_resp, Length_moves_far_resp),
+    
+    random(0, Length_moves_far_resp, Rnd),
+    insects:utils:element_at(Moves_far_resp, Rnd , Hex_move),
+
+
+    findall([Val,Type, Id, Player_id,Hex_select, Level],
+            (
+                member([Val,Type, Id, Player_id,Hex_select, Level, Moves], All_moves),
+                member(Hex_move, Moves)
+            ),
+            (All_hex_select)),
+    
+    length(All_hex_select, Length_hex_select),
+    
+    random(0, Length_hex_select, Rnd_hex_select),
+    insects:utils:element_at(All_hex_select, Rnd_hex_select , [Val,Type, Id, Player_id, Hex_select, Level]),
+    
+    write("hex_select: ") ,writeln(Hex_select),
+    insect(Type, Id,Player_id,Hex_select,Level),
+
+    
+
+
+    retract(piece_selected(_,_,_,_,_)),
+    assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
+
+    hive(L_hive),
+
+    move_insect(Val, Type, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+        [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+    
+    writeln(Msg),
+
+    Msg == "",
+
+    move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
+
+
+
+yep_queen_IA_yep_queen_other(W, Player_id):-
+    get_all_pieces_player(W, Player_id, Pieces_player),
+
+        insects:queen_in_game(Player_id),
+
+        change_player(Player_id, Player_id_other),
+
+        insects:queen_in_game(Player_id_other),
+
+
 
         init_player(Player_id,false),
         get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
@@ -862,19 +1104,41 @@ ia(W, Player_id):-
 
         append(All_moves_add, All_moves_in_hive, All_moves),
 
-        length(All_moves, Length_all_mov),
+        get_all_possible_moves(All_moves, [], All_moves_next_to_one_resp),
+
+
+        insect(abejaReina,1,Player_id, Hex_queen,_),
+        insect(abejaReina,1,Player_id_other, Hex_queen2,_),
+
+
+        find_move_more_near_to_queen(Hex_queen2, All_moves_next_to_one_resp, 1000, [], Moves_near_resp),
+
+        find_move_more_far_to_queen(Hex_queen, Moves_near_resp, -1, [], Moves_far_resp),
         
-        New_Length_all_mov is Length_all_mov +1,
-        random(0, New_Length_all_mov, Rnd_all_mov),
-        insects:utils:element_at(All_moves, Rnd_all_mov , [Val ,Type, Id, Player_id, Hex_select, Level, Moves]), % aqui devolver el ultimo id
-        %heuristica para seleccionar el valor
-        %despues poner aqui un random
-       
-        length(Moves, Length_mov),
         
-        New_Length_mov is Length_mov + 1,
-        random(0, New_Length_mov, Rnd),
-        insects:utils:element_at(Moves, Rnd , Hex_move),
+        write("Moves far resp"), writeln(Moves_far_resp),
+
+        length(Moves_far_resp, Length_moves_far_resp),
+        
+
+        random(0, Length_moves_far_resp, Rnd),
+        insects:utils:element_at(Moves_far_resp, Rnd , Hex_move),
+
+
+        findall([Val,Type, Id, Player_id,Hex_select, Level],
+                (
+                    member([Val,Type, Id, Player_id,Hex_select, Level, Moves], All_moves),
+                    member(Hex_move, Moves)
+                ),
+                (All_hex_select)),
+        
+        length(All_hex_select, Length_hex_select),
+        
+        random(0, Length_hex_select, Rnd_hex_select),
+        insects:utils:element_at(All_hex_select, Rnd_hex_select , [Val,Type, Id, Player_id,Hex_select, Level]),
+
+        insect(Type, Id,Player_id,Hex_select,Level),
+        
 
         retract(piece_selected(_,_,_,_,_)),
         assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
@@ -888,36 +1152,32 @@ ia(W, Player_id):-
 
         Msg == "",
 
-        writeln([Type2, Id2, Player_id2, Hex2, Level2]),
-        
-        color_player(Player_id,Col),
-        
-        
-        
-        retract(piece_selected(_,_,_,_,_)),
-        assert(piece_selected(Type2,Id2,Player_id2,Hex_select2,Level2)),
-        
-
-        move_piece(W, Hex2, Type2, Col), 
-        
-        retract(init_player(Player_id, _)),
-        assert(init_player(Player_id, false)),
-
-        change_player_turn(Type2, Player_id, Hex_select2, Level2, Hex2, L_hive), % ver cuando esto no se cumple
-        
-        
-        change_player(Player_id, Other_player),
-        retract(current_player(_)),
-        assert(current_player(Other_player)),
-       
-
-        unclick(W, Player_id,Msg),
-
-        
-        writeln(Hex_move)
+        move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
 
 
+ia(W, Player_id):-
+    (
+        init_move_IA(W, Player_id) %ok
+    ),!;
+    
+    (
+        must_add_queen_IA(W,Player_id) %ok
+    ),!;
+
+    (
+        add_init_IA(W, Player_id) %ok
+    ),!;
+    
+    (
+        not_queen_IA_yep_queen_other(W, Player_id) %ok
+    ),!;
+
+    (
+        yep_queen_IA_not_queen_other(W, Player_id)
+    ),!;
+
+    (
+        yep_queen_IA_yep_queen_other(W,Player_id)
     )
-   
     .
     

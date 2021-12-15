@@ -45,12 +45,18 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         write("Type: "), writeln([Type, Id, Player_id, Hex, 0, Hex_fin]),
         
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
+        writeln("ssssssssssssssssssssssssssssssssssssssssssssssssssssss"),
         Type2 = Type,
+        
         Id2 = Id,
+        writeln(Player_id),
         Player_id2 = Player_id,
+        
         Hex2 = Hex_fin,
+        
         Level2 = Level,
         Hex_select2 = Hex,
+        
         Msg = "",!
     );
     (
@@ -70,6 +76,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         Val == add,
         must_add_queen(Player_id),
         Type == abejaReina,
+        writeln("Porqueeeeeeeeeeeeee"),
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
@@ -399,7 +406,7 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         assert(hive(L_2))
         
        
-    );
+    ),!;
     (
         writeln("Estoy en el metodo db"),
         hive(L_hive),
