@@ -342,7 +342,9 @@ clear_buttons(W):-
     send(@buttondown, free ),
     send(@buttonleft, free),
     send(@buttonright, free),
-    send(@buttonrestart, free).
+    send(@buttonrestart, free),
+    send(@buttonIA_1, free),
+    send(@buttonIA_2, free).
 
 
 
@@ -356,13 +358,19 @@ draw_buttons(W):-
 
     new(@buttonrestart, button("restart", message(@prolog, restart, W))),
 
+
+    new(@buttonIA_1, button("IA 1", message(@prolog, ia, W, p1))),
+    new(@buttonIA_2, button("IA 2", message(@prolog, ia, W, p2))),
+
     dimensions_static(Size_hex, Size_x, Size_y),
 
     send(W,display, @buttonup, point(Size_x-100,Size_y - 50)),
     send(W,display, @buttondown, point(Size_x-100,Size_y - 30)),
     send(W,display, @buttonleft, point(Size_x-150,Size_y - 40)),
     send(W,display, @buttonright, point(Size_x - 50,Size_y - 40)),
-    send(W,display, @buttonrestart, point(Size_x-150,100)).
+    send(W,display, @buttonrestart, point(Size_x-110,100)),
+    send(W,display, @buttonIA_1, point(Size_x-200, 30)),
+    send(W,display, @buttonIA_2, point(Size_x-200,Size_y-135)).
 
 
 
@@ -696,8 +704,6 @@ make_move_state(W, Position, Type_move):-
         unclick(W, Player_id, Msg),!
     ).
                 
-
-% este predicado recibe las coordenadas en pixeles
 move_piece(W,Hex_end,Type, Color):-
     (
         dimensions(Size_hex,Size_x,Size_y),
@@ -739,4 +745,179 @@ move_piece(W,Hex_end,Type, Color):-
 
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% IA %%
+
+get_all_pieces_player(W, Player_id, Pieces_player):-
+    findall([Type, Initials, In_hive], pieces(Player_id, Type, Initials, In_hive), Pieces_player).
+
+get_possible_moves_initials(W,Val, Player_id, Pieces_player, All_moves):-
+    hive(L_hive),
+
+    findall([Val,Type, Id, Player_id,Hex, Level, Moves], 
+        (
+            member([Type, Initials, In_hive], Pieces_player),
+
+            member(Hex, Initials),
+
+            insect(Type, Id, Player_id,Hex, Level),
+
+            possible_moves(Val, Type, Id, Player_id , Hex, Level, Moves, L_hive)
+        ), 
+        All_moves).
+
+get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves):-
+    hive(L_hive),
+
+    findall([Val,Type, Id, Player_id,Hex, Level, Moves], 
+        (
+            member([Type, Initials, In_hive], Pieces_player),
+
+            member(Hex, In_hive),
+
+            insect(Type, Id, Player_id,Hex, Level),
+
+            Val = Type,
+            possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive)
+        ), 
+        All_moves).
+
+axial_distance([R1,Q1], [R2,Q2], Dist):-
+    R_abs = abs(R1-R2),
+    Q_abs = abs(Q1-Q2),
+    S_abs = abs(-R1 - Q1 + R2 + Q2),
+    Dist = (R_abs + Q_abs + S_abs)/2.
+
+
+
+ia(W, Player_id):-
+    (
+        get_all_pieces_player(W, Player_id, Pieces_player),
+
+        init_player(Player_id,true),
+        get_possible_moves_initials(W, init, Player_id, Pieces_player, All_moves_init),
+
+        %heuristica para seleccionar el valor
+        %despues poner aqui un random
+        
+        member([init, escarabajo, 2, Player_id, Hex_select, Level, Moves], All_moves_init),
+
+        length(Moves, Length_mov),
+        
+        
+        New_Length_mov is Length_mov + 1,
+        writeln(New_Length_mov),
+        random(0,  New_Length_mov, Rnd),
+        writeln(Rnd),
+        insects:utils:element_at(Moves, Rnd , Hex_move),
+
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(escarabajo,2,Player_id,Hex_select,Level)),
+
+        hive(L_hive),
+
+        move_insect(init, escarabajo, 2, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+        
+        Msg == "",
+
+        writeln([Type2, Id2, Player_id2, Hex2, Level2]),
+        
+        color_player(Player_id,Col),
+        
+        
+        
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type2,Id2,Player_id2,Hex_select2,Level2)),
+        
+
+        move_piece(W, Hex2, Type2, Col), 
+        
+        retract(init_player(Player_id, _)),
+        assert(init_player(Player_id, false)),
+
+        change_player_turn(Type2, Player_id, Hex_select2, Level2, Hex2, L_hive), % ver cuando esto no se cumple
+        
+        
+        change_player(Player_id, Other_player),
+        retract(current_player(_)),
+        assert(current_player(Other_player)),
+       
+
+        unclick(W, Player_id,Msg),
+
+        
+        writeln(Hex_move)
+
+    );
+    (
+        get_all_pieces_player(W, Player_id, Pieces_player),
+
+        init_player(Player_id,false),
+        get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
+
+        get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves_in_hive),
+
+
+        append(All_moves_add, All_moves_in_hive, All_moves),
+
+        length(All_moves, Length_all_mov),
+        
+        New_Length_all_mov is Length_all_mov +1,
+        random(0, New_Length_all_mov, Rnd_all_mov),
+        insects:utils:element_at(All_moves, Rnd_all_mov , [Val ,Type, Id, Player_id, Hex_select, Level, Moves]), % aqui devolver el ultimo id
+        %heuristica para seleccionar el valor
+        %despues poner aqui un random
+       
+        length(Moves, Length_mov),
+        
+        New_Length_mov is Length_mov + 1,
+        random(0, New_Length_mov, Rnd),
+        insects:utils:element_at(Moves, Rnd , Hex_move),
+
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
+
+        hive(L_hive),
+
+        move_insect(Val, Type, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+        
+        writeln(Msg),
+
+        Msg == "",
+
+        writeln([Type2, Id2, Player_id2, Hex2, Level2]),
+        
+        color_player(Player_id,Col),
+        
+        
+        
+        retract(piece_selected(_,_,_,_,_)),
+        assert(piece_selected(Type2,Id2,Player_id2,Hex_select2,Level2)),
+        
+
+        move_piece(W, Hex2, Type2, Col), 
+        
+        retract(init_player(Player_id, _)),
+        assert(init_player(Player_id, false)),
+
+        change_player_turn(Type2, Player_id, Hex_select2, Level2, Hex2, L_hive), % ver cuando esto no se cumple
+        
+        
+        change_player(Player_id, Other_player),
+        retract(current_player(_)),
+        assert(current_player(Other_player)),
+       
+
+        unclick(W, Player_id,Msg),
+
+        
+        writeln(Hex_move)
+
+
+    )
+   
+    .
+    

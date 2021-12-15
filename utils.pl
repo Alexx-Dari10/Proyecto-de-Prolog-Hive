@@ -1,7 +1,7 @@
 %export
 
 :- module(utils, 
-    [bigger/2,remove_repeated/2,switch/2, rang/3,delete_one/3
+    [bigger/2,remove_repeated/2,switch/2, rang/3,delete_one/3, element_at/3
     ]).
 
 %utils
@@ -28,3 +28,8 @@ switch(Val, [T:Goal|Cases]) :-
 
 rang(X,Y,X):- X =< Y.
 rang(X,Y,Z):- X < Y, X2 is X+1, rang(X2,Y,Z). 
+
+
+element_at([Hn|R],0,Hn):- !.
+element_at([],N,Z):- N > 0,!, fail.
+element_at([X|R],N,Hn):- N1 is N-1, element_at(R,N1,Hn).

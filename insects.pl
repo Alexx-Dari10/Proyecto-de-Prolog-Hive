@@ -382,6 +382,7 @@ start_insects(Player,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
 move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
     
     (
+        writeln([Type, Id, Player_id, Hex, Level, Hex_fin]),
         hive(L_hive),
         
         % agrega el insecto a la colmena poniendole nivel 0
