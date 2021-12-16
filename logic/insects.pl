@@ -128,7 +128,6 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         not(Val == init),
         not(Val == add),
         not(Val == escarabajo),
-        %not(Val == mosquito),
         not(Val == bichoBola),
         
         queen_in_game(Player_id),
@@ -191,11 +190,9 @@ find_empty_hex_to_move(Moves, L_hive, [Type, Id, Player_id, Hex, Level],Hex_sele
     member(Hex, Moves),
     not(member(Hex, L_hive)),
   
-    %delete_one(Hex2, L_hive1, L_hive2),
     hexagon:not_articulation_point(Hex_select,L_hive),
     insect(Type, Id, Player_id, Hex_select, Level),!.
 
-%
 
 
 %% encontrar el insecto de mayor nivel en la colmena      
@@ -271,7 +268,7 @@ must_add_queen(Player_id):-
 
 player_can_play(Player_id, L_hive):-
     
-     % for para recorrer todos los insectos de la mano, del jugador 
+     % para recorrer todos los insectos de la mano, del jugador 
      (
         findall([Type, Id, Player_id,Hex,-1], 
                 insect(Type, Id, Player_id,Hex, -1), 
@@ -287,28 +284,14 @@ player_can_play(Player_id, L_hive):-
          ! % si encuentro uno q se mueva mover entonces ya esta
     );
 
-    % para recorrer todos los insectos de la mano, del jugador 
-    (
-        findall([Type, Id, Player_id,Hex,-1], 
-                insect(Type, Id, Player_id,Hex, -1), 
-                Insects_hand),
-        
-       
-        member([Type, Id, Player_id_memb ,Hex,Level], Insects_hand),
-        possible_moves(add, Type, Id, Player_id_memb , Hex, Level, Moves, L_hive),
-        length(Moves, Length),
-
-        hexagon:bigger(Length, 0),
-         ! % si encuentro uno q se mueva mover entonces ya esta
-    );
     % para recorrer todos los insectos de la colmena, del jugador
     (
         findall([Type, Id, Player_id,Hex,Level], 
             ((Type, Id, Player_id,Hex, Level), bigger(Level,-1)), 
             Insects_hive),
 
-        member([Type, Player_id_memb, Player_id,Hex,Level], Insects_hive), 
-        insects:possible_moves(Type, Type, Id, Player_id_memb , Hex, Level, Moves, L_hive),
+        member([Type, Id, Player_id,Hex,Level], Insects_hive), 
+        insects:possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive),
         length(Moves, Length),
         hexagon:bigger(Length, 0), ! % si encuentro uno q se mueva mover entonces ya esta
     ).
@@ -334,10 +317,6 @@ tie_game(Player_id1, Player_id2):-
     end_game(Player_id1),
     end_game(Player_id2).
     
-
-game():-
-    start_game().
-
 
 restart_game():-
     retractall(player(_,_,_,_)),
@@ -386,7 +365,7 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         
         
         
-        %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
+        %elimina la posicion antigua del insecto de la lista de las casillas y agrega la nueva
         delete_one(Hex,L_hive, L_1),
         
         append(L_1, [Hex_fin], L_2),
@@ -410,25 +389,6 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         retract(hive(L_hive)),
         assert(hive(L_2))
     ).
-
-
-    
-
-% busca el insecto que esta en la casilla Hex
-find_insect_by_hex(Hex, Type, Id, Player_id, Level):- 
-    insect(Type, Id, Player_id, Hex, Level).
-
-
-% devuelve una lista de los insectos que no estan en la colmena todavia
-find_insects_in_hand(Player,L):-
-    findall([Type, Id, Player, Hex, -1], insect(Type, Id, Player, Hex, -1), L).
-
-
-% devuelve una lista de los insectos que estan en la colmena
-find_insects_in_hive(Player,L):-
-    findall([Type, Id, Player, Hex, Level], (insect(Type, Id, Player, Hex,Level), bigger(Level,-1)), L).
-
-
 
 
 give_adj(Index, Index1,Index2):-

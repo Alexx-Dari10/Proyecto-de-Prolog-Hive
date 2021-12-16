@@ -25,7 +25,6 @@ direction(6, [-1, 0]).
 
 are_neighbors(Hex1, Hex2):- are_neighbors_dir(Hex1,Hex2,1).
 
-%are_neighbors_dir(Hex1,Hex2,Dir).
 are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- direction(Dir,[R_dir,Q_dir]), R2 is R1+R_dir, Q2 is Q1+Q_dir.
 are_neighbors_dir([R1,Q1],[R2,Q2],Dir):- Dir1 is Dir + 1, Dir1 =< 6, are_neighbors_dir([R1,Q1],[R2,Q2],Dir1).
 
@@ -72,7 +71,7 @@ not_articulation_point(Hex_old, L_hive):-
                 member(Hex_neighbor, L_hive1)
             ), L_neighbors),
     
-    all_connected(L_neighbors, L_hive1), writeln("not articulation point").
+    all_connected(L_neighbors, L_hive1).
    
     
 all_connected([], Hive).
@@ -87,22 +86,6 @@ connected_with_all([Neighbor1, Neighbor2|R_neighbors],Hive):-
     
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-% esto es para tener los hexagonos de la forma del juego
-% axial_to_oddq(Hex, OffsetCoord)
-axial_to_oddq([R, Q], OffsetCoord):-
-    number(R),
-    number(Q),
-    Row is R + (Q - (Q mod 2)) / 2,
-    Col is Q,
-    OffsetCoord = [Row, Col].
-
-% oddq_to_axial(OffsetCoord, Hex)
-oddq_to_axial([Row, Col], Hex):-
-    number(Row),
-    number(Col),
-    R is Row - (Col - (Col mod 2)) / 2,
-    Q is Col,
-    Hex = [R, Q].
 
 % estas funciones son para dado un pixel convertirlo a un hexagono y viceversa
 

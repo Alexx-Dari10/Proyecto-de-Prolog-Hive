@@ -1,14 +1,17 @@
 :-use_module(library(pce)).
+
+module(visual,[main/0])
+
 :- pce_image_directory('./images').
 
-:-consult('../hexagon'), import('../hexagon').
-:-consult('../insects'), import('../insects').
+:-consult('../logic/hexagon'), import('../logic/hexagon').
+:-consult('../logic/insects'), import('../logic/insects').
 
 :-consult('utils_visual'), import('utils_visual').
 
 :-consult('draw_visual'), import('draw_visual').
 
-:- consult('../ia'), import('../ia').
+:- consult('../logic/ia'), import('../logic/ia').
 
 
 :-dynamic bool_selected/1, piece_selected/5,pieces/4, 
@@ -52,13 +55,13 @@ resource(arrow_negra, image,image('negra.jpg')).
 
 
 
-main:-
+main():-
 
     insects:start_game(),
 
     assert(game_over(false)),
     assert(message_end_game('')),
-    assert(dimensions(40,1000,800)),
+    assert(dimensions(40,1000,700)),
 
     dimensions(Size_hex, Size_x, Size_y),
     
@@ -129,6 +132,9 @@ restart(W):-
     clear_buttons(W),
     clear_game(W),
 
+
+    dimensions(Size_hex_copy,Size_x_copy,Size_y_copy),
+
     insects:restart_game(),
 
     retractall(win(_)),
@@ -151,7 +157,7 @@ restart(W):-
 
     assert(game_over(false)),
     assert(message_end_game('')),
-    assert(dimensions(40,1000,800)),
+    assert(dimensions(Size_hex_copy,Size_x_copy,Size_y_copy)),
 
     dimensions(Size_hex, Size_x, Size_y),
     
@@ -602,7 +608,7 @@ make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type,
         move_state(Type_move),
         
         
-        dimensions(Size_hex,Size_x,Size_y), %duda aqui si volver a ponerlo
+        dimensions(Size_hex,Size_x,Size_y), 
         
 
         get(Position, x, Click_X),
@@ -804,15 +810,9 @@ get_possible_moves_in_hive_two_queens(W, Val, Player_id, Pieces_player, All_move
 
             member(Hex, In_hive),
 
-            /* last_piece_played(Player_id,Last_Hex),
-            not(Last_Hex == Hex), */
-
             insect(Type, Id, Player_id,Hex, Level),
 
-            /* not(Type == mariquita),
-            not(Type == bichoBola),
-            not(Type == escarabajo), */
-
+          
             change_player(Player_id, Player_id_other),
             insect(abejaReina,1, Player_id_other, Hex_queen, Level_queen),
             not(are_neighbors(Hex, Hex_queen)),
@@ -1200,5 +1200,5 @@ ia(W, Player_id):-
     (
         game_over(false),
         current_player(Player_id),
-        yep_queen_IA_yep_queen_other(W,Player_id) %
+        yep_queen_IA_yep_queen_other(W,Player_id) %ok
     ).

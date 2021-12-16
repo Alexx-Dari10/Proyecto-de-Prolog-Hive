@@ -9,7 +9,7 @@ module(utils_visual, [
 
 
 
-:-consult('../hexagon'), import('../hexagon').
+:-consult('../logic/hexagon'), import('../logic/hexagon').
 
 
 % restamos o sumamos la mitad del tamanho del tablero para tener coordenadas en el centro 

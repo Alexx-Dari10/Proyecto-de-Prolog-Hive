@@ -8,9 +8,9 @@ module(draw_visual,[
         draw_hexagon_pixel_empty/4, draw_hexagon_pixel_filling/4, color_player/2, draw_line/3
     ]).
 
-:-consult('../hexagon'), import('../hexagon').
-:-consult('../insects'), import('../insects').
-:-consult('../utils'), import('../utils').
+:-consult('../logic/hexagon'), import('../logic/hexagon').
+:-consult('../logic/insects'), import('../logic/insects').
+:-consult('../logic/utils'), import('../logic/utils').
 :-consult('utils_visual'), import('utils_visual').
 
 
