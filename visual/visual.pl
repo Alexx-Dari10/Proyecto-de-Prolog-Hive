@@ -61,7 +61,7 @@ main():-
 
     assert(game_over(false)),
     assert(message_end_game('')),
-    assert(dimensions(40,1000,700)),
+    assert(dimensions(40,1000,650)),
 
     dimensions(Size_hex, Size_x, Size_y),
     
