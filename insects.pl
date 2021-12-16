@@ -419,7 +419,6 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
         %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
         
         delete_one(Hex, L_hive, L_1),
-        write_ln(L_1),
         append(L_1, [Hex_fin], L_2),
         retract(hive(L_hive)),
         assert(hive(L_2))
@@ -462,8 +461,8 @@ cell_in_center(Hex,Index, L_hive):-
     hexagon:neighbor_dir(Hex, Adj2, Index2),
 
     member(Adj1, L_hive),
-    member(Adj2, L_hive),
-    write_ln("es en centro").
+    member(Adj2, L_hive).
+
 
 
     
@@ -615,12 +614,11 @@ hormiga_move(Hex,Hex1, Hive, Visited):-
     rang(1,6,Index),
     hexagon:neighbor_dir(Hex,Adj_hex,Index),
 
-    not(cell_in_center(Hex,Index,Hive)), 
-
     not(member(Adj_hex, Hive)),
     not(member(Adj_hex, Visited_1)), % para saber si un nodo no esta visitado
     connected(Adj_hex, Hive),
-    
+
+    not(cell_in_center(Hex,Index,Hive)), 
 
     hormiga_move(Adj_hex, Hex1, Hive, Visited_1).
 
@@ -692,7 +690,6 @@ escarabajo_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         not(insect_blocked(Type, Id, Player_id , Hex, Level)),
         
         hexagon:not_articulation_point(Hex,L_hive),
-        write_ln("not articulation point"),
         delete_one(Hex, L_hive, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
         findall(Hex1, 
                 (hexagon:are_neighbors(Hex,Hex1),hexagon:connected(Hex1,L_hive1)), 
@@ -832,9 +829,18 @@ mariquita_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
 
 mariquita_move(Hex1, L_hive1, Visited, Level_rec, Move):- 
     (
+        Level_rec > 3, 
+        fail
+    );
+    (
         Level_rec == 3, 
         not(member(Hex1, L_hive1)), 
         Move = Hex1
+    );
+    (
+        Level_rec == 3, 
+        member(Hex1, L_hive1), 
+        Move = none
     );
     (
         append(Visited,[Hex1], Visited_1),

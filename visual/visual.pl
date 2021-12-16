@@ -13,7 +13,8 @@
 
 :-dynamic bool_selected/1, piece_selected/5,pieces/4, 
         init_player/2, move_state/1, current_player/1, arrowLeft/3, dimensions/3, dimensions_hive/4,
-        dimensions_static/3, arrow_left/3, game_over/1, tie/1, win/1, message_end_game/1.
+        dimensions_static/3, arrow_left/3, game_over/1, tie/1, win/1, message_end_game/1,
+        last_piece_played/2.
 
 
 change_player(p1,p2).
@@ -102,7 +103,8 @@ main:-
     assert(pieces(p2, bichoBola  ,[[600,Static_Y1]                     ], [])),
 
 
-   
+    assert(last_piece_played(p1,[-30,30])),
+    assert(last_piece_played(p2,[-50,50])),
 
     assert(dimensions_hive(0, Size_x, 100, Static_Y1)),
 
@@ -143,6 +145,7 @@ restart(W):-
     retractall(arrow_left(_,_,_)),
     retractall(pieces(_,_,_,_)),
     retractall(dimensions_hive(_,_,_,_)),
+    retractall(last_piece_played(_,_)),
 
     insects:start_game(),
 
@@ -193,7 +196,8 @@ restart(W):-
     assert(pieces(p2, bichoBola  ,[[600,Static_Y1]                     ], [])),
 
 
-   
+    assert(last_piece_played(p1,[-30,30])),
+    assert(last_piece_played(p2,[-50,50])),
 
     assert(dimensions_hive(0, Size_x, 100, Static_Y1)),
 
@@ -638,7 +642,7 @@ unclick(W, Player_id, Msg):-
 
 make_move_state(W, Position, Type_move):-
     (
-        writeln("primero"),
+        
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
                             Level,[X_axial,Y_axial]),
 
@@ -646,7 +650,7 @@ make_move_state(W, Position, Type_move):-
         move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg,
             [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
         
-        write("mensaje"),writeln(Msg),
+        
         Msg == "",
 
         writeln([Type2, Id2, Player_id2, Hex2, Level2]),
@@ -664,8 +668,7 @@ make_move_state(W, Position, Type_move):-
         retract(init_player(Player_id, _)),
         assert(init_player(Player_id, false)),
 
-        change_player_turn(Type, Player_id, Hex_ini, Level, Hex_fin, L_hive), % ver cuando esto no se cumple
-        
+        change_player_turn(Type, Player_id, Hex_ini, Level, Hex_fin, L_hive), 
         
         change_player(Player_id, Other_player),
         retract(current_player(_)),
@@ -696,10 +699,9 @@ make_move_state(W, Position, Type_move):-
         make_move_state_part1(W, Position, Type_move,Size_hex,Size_x,Size_y,L_hive,Type, Id, Player_id, Hex_ini, 
             Level,[X_axial,Y_axial]),
         
-        write_ln([Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial]]),
         move_insect(Type_move, Type, Id, Player_id, Hex_ini, Level, [X_axial,Y_axial],L_hive, Msg,
             [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
-        writeln("helllooooooo"),
+       
         not(Msg == ""),
         
         writeln(Msg),
@@ -716,13 +718,9 @@ move_piece(W,Hex_end,Type, Color):-
         pieces(Player_id, Type, Initial_pieces, In_hive_pieces),
 
         
-
         member(Hex_select, Initial_pieces),
 
-        
-        
         delete(Initial_pieces, Hex_select, Initial_pieces_1),
-
 
         append(In_hive_pieces, [Hex_end], In_hive_pieces_1),
 
@@ -753,63 +751,96 @@ move_piece(W,Hex_end,Type, Color):-
 %% IA %%
 
 get_all_pieces_player(W, Player_id, Pieces_player):-
-    findall([Type, Initials, In_hive], pieces(Player_id, Type, Initials, In_hive), Pieces_player).
+    findall([Type, Initials, In_hive], 
+            (
+                pieces(Player_id, Type, Initials, In_hive)
+
+
+            ), Pieces_player).
 
 get_possible_moves_initials(W,Val, Player_id, Pieces_player, All_moves):-
     hive(L_hive),
 
-    findall([Val,Type, Id, Player_id,Hex, Level, Moves], 
+    findall([Val,Type, Id, Player_id,Hex, Level, Moves1], 
         (
             member([Type, Initials, In_hive], Pieces_player),
 
-            member(Hex, Initials),
-
+            length(Initials, Length_init),
+            New_Length is Length_init - 1,
+            element_at(Initials, New_Length, Hex),
+            
             insect(Type, Id, Player_id,Hex, Level),
 
-            possible_moves(Val, Type, Id, Player_id , Hex, Level, Moves, L_hive)
+            possible_moves(Val, Type, Id, Player_id , Hex, Level, Moves, L_hive),
+            remove_repeated(Moves, Moves1)
         ), 
         All_moves).
+
 
 get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves):-
     hive(L_hive),
 
-    findall([Val,Type, Id, Player_id,Hex, Level, Moves], 
+    findall([Val,Type, Id, Player_id,Hex, Level, Moves1], 
         (
             member([Type, Initials, In_hive], Pieces_player),
 
             member(Hex, In_hive),
             
-            not_articulation_point(Hex, L_hive),
+            last_piece_played(Player_id,Last_Hex),
+            not(Last_Hex == Hex),
 
             insect(Type, Id, Player_id,Hex, Level),
 
+
+            not(Type == bichoBola),
+
             Val = Type,
-            possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive)
+            possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive),
+            remove_repeated(Moves, Moves1)
         ), 
         All_moves).
 
 
+get_possible_moves_in_hive_two_queens(W, Val, Player_id, Pieces_player, All_moves):-
+    hive(L_hive),
+
+    findall([Val,Type, Id, Player_id,Hex, Level, Moves1], 
+        (
+            member([Type, Initials, In_hive], Pieces_player),
+
+            member(Hex, In_hive),
+
+            last_piece_played(Player_id,Last_Hex),
+            not(Last_Hex == Hex),
+
+            insect(Type, Id, Player_id,Hex, Level),
 
 
-find_insects(Player_id, Val, Moves):-
+            change_player(Player_id, Player_id_other),
+            insect(abejaReina,1, Player_id_other, Hex_queen, Level_queen),
+            not(are_neighbors(Hex, Hex_queen)),
 
+            Val = Type,
+            possible_moves(Type, Type, Id, Player_id , Hex, Level, Moves, L_hive),
+
+            remove_repeated(Moves, Moves1)
+        ), 
+        All_moves).
+
+
+check_white_space_queen_enemy(Hex_queen, L_hive, Moves_near_resp, Hex_neighbors_queen):-
     (
-        Val == add,
-        findall(Hex, 
-            (
-                insect(Type, Id, Player_id, Hex, Level),
-                Level == -1
-            ),
-            Moves)
-    );
+        findall(Hex,
+                (
+                    are_neighbors(Hex, Hex_queen),
+                    not(member(Hex, L_hive)),
+                    member(Hex, Moves_near_resp)
+                ),
+                Hex_neighbors_queen),
+        writeln(Hex_neighbors_queen) 
+    ),!;
     (
-        not(Val == add),
-        findall(Hex, 
-            (
-                insect(Type, Id, Player_id, Hex, Level),
-                Level > -1
-            ),
-            Moves)
+        Hex_neighbors_queen = []
     ).
 
 
@@ -826,6 +857,10 @@ move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2
 
     move_piece(W, Hex2, Type2, Col), 
     
+    retract(last_piece_played(_,_)),
+    assert(last_piece_played(Player_id,Hex2)),
+    
+
     retract(init_player(Player_id, _)),
     assert(init_player(Player_id, false)),
 
@@ -1086,98 +1121,108 @@ yep_queen_IA_not_queen_other(W, Player_id):-
 
 
 yep_queen_IA_yep_queen_other(W, Player_id):-
+    
     get_all_pieces_player(W, Player_id, Pieces_player),
 
-        insects:queen_in_game(Player_id),
+    insects:queen_in_game(Player_id),
 
-        change_player(Player_id, Player_id_other),
+    change_player(Player_id, Player_id_other),
 
-        insects:queen_in_game(Player_id_other),
-
-
-
-        init_player(Player_id,false),
-        get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
-
-        get_possible_moves_in_hive(W, Val, Player_id, Pieces_player, All_moves_in_hive),
+    insects:queen_in_game(Player_id_other),
 
 
-        append(All_moves_add, All_moves_in_hive, All_moves),
 
-        get_all_possible_moves(All_moves, [], All_moves_next_to_one_resp),
+    init_player(Player_id,false),
+    get_possible_moves_initials(W, add, Player_id, Pieces_player, All_moves_add),
 
-
-        insect(abejaReina,1,Player_id, Hex_queen,_),
-        insect(abejaReina,1,Player_id_other, Hex_queen2,_),
+    get_possible_moves_in_hive_two_queens(W, Val, Player_id, Pieces_player, All_moves_in_hive),
 
 
-        find_move_more_near_to_queen(Hex_queen2, All_moves_next_to_one_resp, 1000, [], Moves_near_resp),
+    append(All_moves_add, All_moves_in_hive, All_moves),
 
-        find_move_more_far_to_queen(Hex_queen, Moves_near_resp, -1, [], Moves_far_resp),
-        
-        
-        write("Moves far resp"), writeln(Moves_far_resp),
+    remove_repeated(All_moves, All_moves1),
 
-        length(Moves_far_resp, Length_moves_far_resp),
-        
-
-        random(0, Length_moves_far_resp, Rnd),
-        insects:utils:element_at(Moves_far_resp, Rnd , Hex_move),
+    get_all_possible_moves(All_moves1, [], All_moves_next_to_one_resp),
 
 
-        findall([Val,Type, Id, Player_id,Hex_select, Level],
-                (
-                    member([Val,Type, Id, Player_id,Hex_select, Level, Moves], All_moves),
-                    member(Hex_move, Moves)
-                ),
-                (All_hex_select)),
-        
-        length(All_hex_select, Length_hex_select),
-        
-        random(0, Length_hex_select, Rnd_hex_select),
-        insects:utils:element_at(All_hex_select, Rnd_hex_select , [Val,Type, Id, Player_id,Hex_select, Level]),
 
-        insect(Type, Id,Player_id,Hex_select,Level),
-        
+    insect(abejaReina,1,Player_id, Hex_queen,_),
+    insect(abejaReina,1,Player_id_other, Hex_queen2,_),
 
-        retract(piece_selected(_,_,_,_,_)),
-        assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
 
-        hive(L_hive),
 
-        move_insect(Val, Type, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
-            [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
-        
-        writeln(Msg),
+    find_move_more_far_to_queen(Hex_queen, All_moves_next_to_one_resp, -1, [], Moves_far_resp),
 
-        Msg == "",
+    find_move_more_near_to_queen(Hex_queen2, Moves_far_resp, 1000, [], Moves_near_resp),
 
-        move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]).
+    hive(L_hive),
+
+    length(Moves_near_resp, Length_moves_near_resp),
+    
+    random(0, Length_moves_near_resp, Rnd),
+    insects:utils:element_at(Moves_near_resp, Rnd , Hex_move),
+
+
+    findall([Val,Type, Id, Player_id,Hex_select, Level],
+            (
+                member([Val,Type, Id, Player_id,Hex_select, Level, Moves], All_moves),
+                member(Hex_move, Moves)
+            ),
+            (All_hex_select)),
+    
+    length(All_hex_select, Length_hex_select),
+    
+    random(0, Length_hex_select, Rnd_hex_select),
+    insects:utils:element_at(All_hex_select, Rnd_hex_select , [Val,Type, Id, Player_id,Hex_select, Level]),
+
+    insect(Type, Id,Player_id,Hex_select,Level),
+    
+
+    retract(piece_selected(_,_,_,_,_)),
+    assert(piece_selected(Type,Id,Player_id,Hex_select,Level)),
+
+    hive(L_hive),
+
+    move_insect(Val, Type, Id, Player_id, Hex_select, Level, Hex_move,L_hive, Msg,
+        [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2]),
+    
+    writeln(Msg),
+
+    Msg == "",
+
+    move_draw_IA(W,Player_id,Msg, [Type2, Id2, Player_id2, Hex2, Level2, Hex_select2])
+    .
 
 
 ia(W, Player_id):-
     (
+        game_over(false),
         init_move_IA(W, Player_id) %ok
     ),!;
     
     (
+        game_over(false),
         must_add_queen_IA(W,Player_id) %ok
     ),!;
 
     (
+        game_over(false),
         add_init_IA(W, Player_id) %ok
     ),!;
     
     (
+        game_over(false),
         not_queen_IA_yep_queen_other(W, Player_id) %ok
     ),!;
 
     (
-        yep_queen_IA_not_queen_other(W, Player_id)
+        game_over(false),
+        yep_queen_IA_not_queen_other(W, Player_id) %ok
     ),!;
 
     (
-        yep_queen_IA_yep_queen_other(W,Player_id)
+        game_over(false),
+        yep_queen_IA_yep_queen_other(W,Player_id) %
     )
     .
     

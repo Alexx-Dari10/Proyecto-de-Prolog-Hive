@@ -71,4 +71,6 @@ get_all_possible_moves([[Val,Type, Id, Player_id,Hex, Level, Moves]|All_moves],
 
     append(All_moves_next_to_one, Moves, All_moves_next_to_one_concat),
     get_all_possible_moves(All_moves, All_moves_next_to_one_concat, All_moves_next_to_one_resp).
-       
+    
+
+
