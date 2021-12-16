@@ -49,7 +49,7 @@ is_connected_hex_to_hive(Hex, Hive):-
 connected(Hex,Hive):- are_neighbors(Hex, Hex1), member(Hex1, Hive),!.
 
 % devuelve true si hay camino entre dos casillas de la colmena
-dfs(Hex1, Hex2, Hive, Visited):- Hex1 == Hex2, writeln("esta conectado"),!.
+dfs(Hex1, Hex2, Hive, Visited):- Hex1 == Hex2,!.
 
 dfs(Hex1, Hex2, Hive, Visited):-
     append(Visited,[Hex1], Visited_1),

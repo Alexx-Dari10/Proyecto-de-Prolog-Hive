@@ -42,14 +42,14 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         not(must_add_queen(Player_id)),
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
-        write("Type: "), writeln([Type, Id, Player_id, Hex, 0, Hex_fin]),
+        
         
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
-        writeln("ssssssssssssssssssssssssssssssssssssssssssssssssssssss"),
+        
         Type2 = Type,
         
         Id2 = Id,
-        writeln(Player_id),
+        
         Player_id2 = Player_id,
         
         Hex2 = Hex_fin,
@@ -76,7 +76,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         Val == add,
         must_add_queen(Player_id),
         Type == abejaReina,
-        writeln("Porqueeeeeeeeeeeeee"),
+        
         possible_moves(Val, Type, Id, Player_id, Hex, Level,Moves, L_hive),
         member(Hex_fin, Moves),
         move_insect_db(Type, Id, Player_id, Hex, 0, Hex_fin),
@@ -101,7 +101,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         Hex2 = Hex_fin,
         Level2 = Level,
         Hex_select2 = Hex,
-        writeln("Add queen to move any piece"),
+        
         Msg = "Add queen to move any piece",!
         
     ),!;
@@ -121,8 +121,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         Hex2 = Hex_fin,
         Level2 = Level,
         Hex_select2 = Hex,
-        Msg = "",
-        writeln(Msg),!
+        Msg = "",!
     );
     
     (
@@ -144,10 +143,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         Hex2 = Hex_fin,
         Level2 = Level,
         Hex_select2 = Hex,
-        Msg = "",
-        write("Aqui entrooooo"),
-        
-        writeln(Msg),!
+        Msg = "",!
     );
     (
         Val == bichoBola,
@@ -159,7 +155,6 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         not(member(Hex_fin, L_hive)),
        
         
-        writeln("Hola1"),
         move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin),
         Type2 = Type,
         Id2 = Id,
@@ -167,9 +162,7 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         Hex2 = Hex_fin,
         Level2 = Level,
         Hex_select2 = Hex,
-        Msg = "",
-        write("Aqui entrooooo1"),
-        writeln(Msg),!
+        Msg = "",!
     );
     (
         Val == bichoBola,
@@ -179,20 +172,17 @@ move_insect(Val, Type, Id, Player_id, Hex, Level, Hex_fin, L_hive, Msg,[Type2, I
         
         member(Hex_fin, Moves),
         member(Hex_fin, L_hive),
-        writeln("Hola2"),
+        
 
 
         find_empty_hex_to_move(Moves, L_hive, [Type2, Id2, Player_id2, Hex2, Level2],Hex_fin),
         
-        writeln([Type2, Id2, Player_id2, Hex_fin, Level2, Hex2]),
+        
         Hex_select2 = Hex_fin,
         move_insect_db(Type2, Id2, Player_id2, Hex_fin, Level2, Hex2), !,
-        writeln([Type2, Id2, Player_id2, Hex_fin, Level2, Hex2]),
-        writeln(Val),
+        
     
-        Msg = "",
-        write("Aqui entrooooo2"),
-        writeln(Msg),!
+        Msg = "",!
     ).
 
 
@@ -238,7 +228,7 @@ insect_blocked(Type, Id, Player_id , Hex, Level):-
 change_player_turn(Type, Player_id, Hex, Level, Hex_fin, L_hive):-
     (
         % elimina el jugador que es current ahora 
-        writeln("change_player_turn"),
+        
         retract(player(Player_id, Moves, Current,Init)),
         % busca el otro jugador que hay en la base de datos y lo pone como current si este puede jugar
         
@@ -247,7 +237,7 @@ change_player_turn(Type, Player_id, Hex, Level, Hex_fin, L_hive):-
         
 
         player_can_play(Id_other, L_hive),
-        writeln("can play"),
+        
         retract(player(Id_other, Moves_other, _, Init_other)),
         assert(player(Id_other, Moves_other, true, Init_other)),
         
@@ -256,7 +246,7 @@ change_player_turn(Type, Player_id, Hex, Level, Hex_fin, L_hive):-
         assert(player(Player_id, Moves_new, false, false))
     );
     (
-        writeln("aqui entra alguna vez?"),
+        
         % elimina el jugador que es current ahora con su cantidad de movimientos 
         retract(player(Player_id, Moves, Current,Init)),
         % busca el otro jugador que hay en la base de datos y lo pone como current si este puede jugar
@@ -335,15 +325,13 @@ end_game(Player_id):-
     
     length(L_neighbors, Length),
     Length == 6,
-    player(P_id, _,_,_), not(P_id == Player_id),
-    write("Winner: "), writeln(P_id).
+    player(P_id, _,_,_), not(P_id == Player_id).
     
 
 % juego empatado  
 tie_game(Player_id1, Player_id2):-
     end_game(Player_id1),
-    end_game(Player_id2),
-    writeln("Juego empatado").   
+    end_game(Player_id2).
     
 
 game():-
@@ -389,18 +377,17 @@ start_insects(Player,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3]):-
 move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
     
     (
-        writeln([Type, Id, Player_id, Hex, Level, Hex_fin]),
         hive(L_hive),
         
         % agrega el insecto a la colmena poniendole nivel 0
         retract(insect(Type, Id, Player_id, Hex, Lev)),
         assert(insect(Type, Id, Player_id, Hex_fin, Level)),
         
-        write("se hizo el cambio"),
+        
         
         %elimina la posicion vieja del insecto de la lista de las casillas y agrega la nueva
         delete_one(Hex,L_hive, L_1),
-        writeln(L_1),
+        
         append(L_1, [Hex_fin], L_2),
         retract(hive(L_hive)),
         assert(hive(L_2))
@@ -408,7 +395,6 @@ move_insect_db(Type, Id, Player_id, Hex, Level, Hex_fin):-
        
     ),!;
     (
-        writeln("Estoy en el metodo db"),
         hive(L_hive),
         
 
@@ -601,7 +587,6 @@ hormiga_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     );
     (
         not(hexagon:not_articulation_point(Hex,L_hive)),
-        writeln("Es de articulacion"),
         Moves = []
     ).
 
@@ -702,7 +687,7 @@ escarabajo_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
     (
         
         not(hexagon:not_articulation_point(Hex,L_hive)),
-        writeln("Es de articulacion"),
+        
         Moves = []
         
     ).
@@ -758,7 +743,7 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         hexagon:not_articulation_point(Hex,L_hive),
         delete_one( Hex, L_hive, L_hive1), % esto es para analizar si esta conectada una casilla a la colmena sin la casilla Hex 
 
-        writeln(Hex),
+       
         
         neighbor_dir(Hex,Neighbor_1,1),
         neighbor_dir(Hex,Neighbor_2,2),
@@ -767,7 +752,7 @@ mosquito_possible_moves(Type, Id, Player_id , Hex, Level, Moves, L_hive):-
         neighbor_dir(Hex,Neighbor_5,5),
         neighbor_dir(Hex,Neighbor_6,6),
 
-        writeln("msquitooooooooooooooooooooooo"),
+        
 
         mosquito_move([Hex, Id, Player_id, Level],Neighbor_1, Moves_1,L_hive1),
         mosquito_move([Hex, Id, Player_id, Level],Neighbor_2, Moves_2,L_hive1),
@@ -928,7 +913,7 @@ select_in_hand(Type, Player_id , Hex_select, Id,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y
             length(L_insects, Length),
             Length == 3,
             Id = 3,
-            writeln("3"),
+            
             
             set_hex_to_type(Type, 3, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
         ),!;
@@ -938,7 +923,7 @@ select_in_hand(Type, Player_id , Hex_select, Id,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y
             length(L_insects, Length),
             Length == 2,
             Id = 2,
-            writeln("2"),
+           
             set_hex_to_type(Type, 2, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
         ),!;
         (
@@ -946,7 +931,7 @@ select_in_hand(Type, Player_id , Hex_select, Id,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y
             length(L_insects, Length),
             Length == 1,
             Id = 1,
-            writeln("1"),
+            
             set_hex_to_type(Type, 1, Hex_select,[X1,X2,X3,X4,X5,X6,X7,X8], [Y1,Y2,Y3])
         ).
 

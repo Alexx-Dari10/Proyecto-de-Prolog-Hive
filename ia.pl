@@ -16,14 +16,14 @@ find_move_more_near_to_queen(Hex_queen, [], Distance, Moves_near, Moves_near).
 find_move_more_near_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_near,Moves_near_resp):-
     axial_distance(Hex_queen, Hex, Dist),
 
-    Dist < Distance,!,
+    Dist < Distance,
 
     find_move_more_near_to_queen(Hex_queen, Moves, Dist, [Hex],Moves_near_resp).
 
 find_move_more_near_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_near,Moves_near_resp):-
     axial_distance(Hex_queen, Hex, Dist),
 
-    Dist == Distance,!,
+    Dist == Distance,
 
     append(Moves_near, [Hex], Moves_near1),
 
@@ -31,8 +31,8 @@ find_move_more_near_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_near,Moves_
 
 find_move_more_near_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_near,Moves_near_resp):-
     axial_distance(Hex_queen, Hex, Dist),
-    Dist > Distance,!,
-    find_move_more_near_to_queen(Hex_queen, Moves, Dist, Moves_near,Moves_near_resp).
+    Dist > Distance,
+    find_move_more_near_to_queen(Hex_queen, Moves, Distance, Moves_near,Moves_near_resp).
 
 
 
@@ -44,7 +44,7 @@ find_move_more_far_to_queen(Hex_queen, [], Distance, Moves_far, Moves_far).
 find_move_more_far_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_far,Moves_far_resp):-
     axial_distance(Hex_queen, Hex, Dist),
 
-    Dist > Distance, !, 
+    Dist > Distance,
 
     find_move_more_far_to_queen(Hex_queen, Moves, Dist, [Hex], Moves_far_resp).
 
@@ -52,7 +52,7 @@ find_move_more_far_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_far,Moves_fa
 find_move_more_far_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_far,Moves_far_resp):-
     axial_distance(Hex_queen, Hex, Dist),
 
-    Dist == Distance,!,
+    Dist == Distance,
 
     append(Moves_far, [Hex], Moves_far1),
 
@@ -61,7 +61,9 @@ find_move_more_far_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_far,Moves_fa
 find_move_more_far_to_queen(Hex_queen, [Hex|Moves], Distance, Moves_far,Moves_far_resp):-
     axial_distance(Hex_queen, Hex, Dist),
     Dist < Distance, 
-    find_move_more_far_to_queen(Hex_queen, Moves, Dist, Moves_far,Moves_far_resp).
+    find_move_more_far_to_queen(Hex_queen, Moves, Distance, Moves_far,Moves_far_resp).
+
+
 
 
 
