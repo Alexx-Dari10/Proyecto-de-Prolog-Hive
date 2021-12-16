@@ -319,8 +319,9 @@ end_game(Player_id):-
 
     insect(abejaReina, Id, Player_id, Hex, Level),
     member(Hex, L_hive),
+    remove_repeated(L_hive,L_hive1),
     findall(Hex_neighbor, 
-            (hexagon:are_neighbors(Hex,Hex_neighbor), member(Hex_neighbor,L_hive)), 
+            (hexagon:are_neighbors(Hex,Hex_neighbor), member(Hex_neighbor,L_hive1)), 
             L_neighbors),
     
     length(L_neighbors, Length),

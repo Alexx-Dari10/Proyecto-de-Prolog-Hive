@@ -72,7 +72,7 @@ not_articulation_point(Hex_old, L_hive):-
                 member(Hex_neighbor, L_hive1)
             ), L_neighbors),
     
-    all_connected(L_neighbors, L_hive1).
+    all_connected(L_neighbors, L_hive1), writeln("not articulation point").
    
     
 all_connected([], Hive).
@@ -81,7 +81,7 @@ all_connected([Neighbor1|R_neighbors], Hive):- connected_with_all([Neighbor1|R_n
 
 connected_with_all([Neighbor1|[]],Hive).
 connected_with_all([Neighbor1, Neighbor2|R_neighbors],Hive):-  
-                        dfs(Neighbor1, Neighbor2,Hive,[]), 
+                        dfs(Neighbor1, Neighbor2,Hive,[]),!, 
                         connected_with_all([Neighbor1|R_neighbors],Hive).   
     
     

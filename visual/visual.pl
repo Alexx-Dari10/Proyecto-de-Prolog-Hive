@@ -290,6 +290,22 @@ draw_game(W):-
         not(check_end_game(W)),
         draw_board(W)
     );
+    
+    (
+        check_end_game(W),
+        tie(true),
+        
+        retract(message_end_game(_)),
+        assert(message_end_game("Tie game")),
+        
+        draw_board(W),
+       
+        retract(game_over(false)),
+        assert(game_over(true))
+        
+        
+       
+    );
     (
         check_end_game(W),
         win(p1),
@@ -306,7 +322,7 @@ draw_game(W):-
         
         
         
-    ),!;
+    );
     (
         check_end_game(W),
         win(p2),
@@ -321,21 +337,6 @@ draw_game(W):-
         
        
         
-    ),!;
-    (
-        check_end_game(W),
-        tie(true),
-        
-        retract(message_end_game(_)),
-        assert(message_end_game("Tie game")),
-        
-        draw_board(W),
-       
-        retract(game_over(false)),
-        assert(game_over(true))
-        
-        
-       
     ).
 
 
@@ -808,9 +809,9 @@ get_possible_moves_in_hive_two_queens(W, Val, Player_id, Pieces_player, All_move
 
             insect(Type, Id, Player_id,Hex, Level),
 
-            not(Type == mariquita),
+            /* not(Type == mariquita),
             not(Type == bichoBola),
-            not(Type == escarabajo),
+            not(Type == escarabajo), */
 
             change_player(Player_id, Player_id_other),
             insect(abejaReina,1, Player_id_other, Hex_queen, Level_queen),
@@ -1122,22 +1123,18 @@ yep_queen_IA_yep_queen_other(W, Player_id):-
     insect(abejaReina,1,Player_id_other, Hex_queen2,_),
 
 
-
-    %find_move_more_far_to_queen(Hex_queen, All_moves_next_to_one_resp1, -1, [], Moves_far_resp),
-
-    write("All_moves_next_to_one_resp1: "), writeln(All_moves_next_to_one_resp1),
-    
-
     find_move_more_near_to_queen(Hex_queen2, All_moves_next_to_one_resp1, 1000, [], Moves_near_resp),
-    
-    writeln(Moves_near_resp),
+
+    find_move_more_far_to_queen(Hex_queen, Moves_near_resp, -1, [], Moves_far_resp),
+
+
 
     hive(L_hive),
 
-    length(Moves_near_resp, Length_moves_near_resp),
+    length(Moves_far_resp, Length_moves_far_resp),
     
-    random(0, Length_moves_near_resp, Rnd),
-    insects:utils:element_at(Moves_near_resp, Rnd , Hex_move),
+    random(0, Length_moves_far_resp, Rnd),
+    insects:utils:element_at(Moves_far_resp, Rnd , Hex_move),
 
 
     findall([Val,Type, Id, Player_id,Hex_select, Level],
@@ -1172,30 +1169,36 @@ yep_queen_IA_yep_queen_other(W, Player_id):-
 ia(W, Player_id):-
     (
         game_over(false),
+        current_player(Player_id),
         init_move_IA(W, Player_id) %ok
     ),!;
     
     (
         game_over(false),
+        current_player(Player_id),
         must_add_queen_IA(W,Player_id) %ok
     ),!;
 
     (
         game_over(false),
+        current_player(Player_id),
         add_init_IA(W, Player_id) %ok
     ),!;
     
     (
         game_over(false),
+        current_player(Player_id),
         not_queen_IA_yep_queen_other(W, Player_id) %ok
     ),!;
 
     (
         game_over(false),
+        current_player(Player_id),
         yep_queen_IA_not_queen_other(W, Player_id) %ok
     ),!;
 
     (
         game_over(false),
+        current_player(Player_id),
         yep_queen_IA_yep_queen_other(W,Player_id) %
     ).
